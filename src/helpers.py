@@ -185,7 +185,7 @@ def add_songs_to_playlist(play_id, tracks):
 # Checks if playlist specified exists
 # If exists, retrieves recommended tracks (40) and adds to playlist
 # If does not exist, creates playlist with specified name and adds recommended tracks (40)
-def extend_playlist(playlist_name, playlist_id, provide_options=False):  
+def extend_playlist(target_playlist_name, target_playlist_id, provide_options=False):  
 
     if provide_options:
         type_choice = playlist_type_options()
@@ -195,17 +195,23 @@ def extend_playlist(playlist_name, playlist_id, provide_options=False):
         size_choice = 2 # default value - extends by 40 songs
 
     if type_choice == 2:
-        tracks = get_recommendations_from_playlist(size_choice)[0]
-
+        print_all_playlist_names()
+        source_playlist_name = get_source_playlist_name()
+        playlist_exists, source_playlist_id = playlist_exists_with_id(source_playlist_name)
+        if playlist_exists:
+            tracks = get_recommendations_from_playlist(source_playlist_name, source_playlist_id, size_choice)
+        else:
+            print("Playlist extension failed.  Source playlist does not exist.")
+            return False
     else:
         top_tracks = get_top_tracks()
         tracks = get_recommendation_tracks(top_tracks, size_choice)
 
     if tracks:
-        print(f"Adding songs to playlist: {playlist_name}")
-        success = add_songs_to_playlist(playlist_id, tracks)
+        print(f"Adding songs to playlist: {target_playlist_name}")
+        success = add_songs_to_playlist(target_playlist_id, tracks)
         if success:
-            print(f"Songs added successfully to playlist: {playlist_name}")
+            print(f"Songs added successfully to playlist: {target_playlist_name}")
             return True
 
         else:
@@ -225,6 +231,7 @@ def delete_playlists(name, playlist_ids):
         print(f"No playlists exist with name: {name}")
 
 
+# Retrieves recommendations based on playlist songs
 def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists):
     playlist_data = get_playlist_data(playlist_id)
     total_tracks = playlist_data['total']

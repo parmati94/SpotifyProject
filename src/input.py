@@ -1,4 +1,8 @@
-# Menu options for main program menu
+playlist_types = [1, 2]
+playlist_sizes = [1, 2, 3, 4]
+
+
+# Menu options for main program menu.  Returns -1 if input passed is not an integer
 def menu_options():
     print('\nSelect menu option: \n')
     print('1. Create playlist based on recommendations')
@@ -9,10 +13,13 @@ def menu_options():
     print('6. Exit program')
     print('7. Logout of Spotify account')
 
-    choice = int(input("\nInput #: "))
+    choice = input("\nInput #: ")
     print("\n")
+    
+    if not choice.isnumeric():
+        return -1
 
-    return choice
+    return int(choice)
 
 
 def playlist_type_options():
@@ -23,7 +30,7 @@ def playlist_type_options():
     choice = int(input("\nInput #: "))
     print("\n")
 
-    if choice == 1 or choice == 2:
+    if choice in playlist_types:
         return choice
     else:
         print("Invalid option selected.")
@@ -40,17 +47,22 @@ def playlist_size_options():
     choice = int(input("\nInput #: "))
     print("\n")
 
-    if choice == 1 or choice == 2 or choice == 3 or choice == 4:
+    if choice in playlist_sizes:
         return choice
     else:
         print("Invalid option selected.")
         exit(0)
 
-# Currently not in use and needs to be updated
+
 def get_new_playlist_name():
     playlist_name = input("Enter name for new playlist: ")
     return playlist_name
 
-def get_existing_playlist_name():
-    playlist_name = input("Enter existing playlist name to extend: ")
+
+def get_source_playlist_name():
+    playlist_name = input("Enter source playlist name to use for recommendations: ")
     return playlist_name
+
+def get_target_playlist_name():
+    target_playlist = input("Enter existing playlist name to extend: ")
+    return target_playlist
