@@ -11,6 +11,8 @@ and a REDIRECT_URI, each on their own line.  These can be obtained by registerin
 
 ## Usage:
 
+Run main.py to start program: ```python3 main.py``` 
+
 Currently, this script has the ability to:
 
 1. Create an 80-song playlist based on your top songs from the last month.
