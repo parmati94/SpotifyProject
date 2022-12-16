@@ -66,23 +66,25 @@ def extend_existing_playlist():
        extend_playlist(target_playlist_name, playlist_id, provide_options=True) 
     else:
         print("Playlist does not exist.  Please enter a valid playlist name.")
-
+        
+def help_menu():
+    print_help_menu()
 
 # This is a main function...
 def main():
-    
+
     sp = config.spotify_auth()
     sp.current_user() # Call must be made on 'sp' return object to force authorization prior to selecting menu options
     
     choice = 0
 
-    while choice != 6:
+    while choice != 7:
 
-        choice = menu_options()
+        choice = print_menu_options()
         
         if choice == -1:
-            print("Input must be an integer.  Please enter a valid menu option.")
-        if choice == 1:
+            print("Invalid input provided.  Input must be an integer value included on the menu.")
+        elif choice == 1:
             create_daily_recommendation_playlist(date, 4)
         elif choice == 2:
             weekly_extended_playlist()
@@ -93,12 +95,12 @@ def main():
         elif choice == 5:
             extend_existing_playlist()
         elif choice == 6:
-            exit(0)
+            help_menu()
         elif choice == 7:
+            exit(0)
+        elif choice == 8:
             re_auth()
-            exit(0) 
-        else:
-            print("Invalid option provided.  Please enter a valid menu option.")      
+            exit(0)      
 
 
 if __name__ == "__main__":
