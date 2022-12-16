@@ -60,6 +60,10 @@ def delete_all_daily_playlists():
 
 # This is a main function...
 def main():
+    
+    sp = config.spotify_auth()
+    sp.current_user() # Call must be made on 'sp' return object to force authorization prior to selecting menu options
+    
     choice = 0
 
     while choice != 6:
@@ -79,7 +83,8 @@ def main():
         elif choice == 6:
             exit(0)
         elif choice == 7:
-            re_auth()           
+            re_auth()
+            exit(0)        
 
 
 if __name__ == "__main__":
