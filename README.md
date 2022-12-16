@@ -13,9 +13,10 @@ and a REDIRECT_URI, each on their own line.  These can be obtained by registerin
 
 Currently, this script has the ability to:
 
-1. Create an 80-song playlist based on your top songs
-2. Extend a 'weekly playlist', which uses recommendations based on your top songs.  Will create one if it doesnt exist and populate with recommended songs
-3. Delete all of the daily playlists that were created for the day (from #1) 
-4. Create an 80 song playlist based off of another playlist you choose
+1. Create an 80-song playlist based on your top songs from the last month.
+2. Extend a 'weekly playlist', which uses recommendations based on your top songs.  Will create one if it doesnt exist and populate with recommended songs.
+3. Delete all of the daily playlists that were created for the day (from #1).
+4. Create an 80 song playlist based off of an existing playlist.
+5. Extend any existing playlist with either a) recommendations for you based on your top tracks or b) recommendations based on an existing playlist
 
 
