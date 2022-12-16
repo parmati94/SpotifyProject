@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import setup.config as config
 from input import *
+import random
 
 sp = config.spotify_auth()
 
@@ -116,6 +117,7 @@ def get_recommendations(split_tracks, num):
 
         recommendations.extend(temp_rec_id)
 
+    random.shuffle(recommendations)
     return recommendations
 
 
