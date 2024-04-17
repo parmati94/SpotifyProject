@@ -4,3 +4,4 @@ spotipy==2.22.0
 starlette==0.37.2
 itsdangerous==2.2.0
 uvicorn=0.20.0
+python-dotenv==0.20.0
