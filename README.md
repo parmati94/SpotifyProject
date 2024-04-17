@@ -2,7 +2,7 @@
 
 ## Setup:
 
-You will need to create a .env file which resides in the same directory as config.py (src/setup).  This file will need to include a CLIENT_SECRET, CLIENT_ID,
+You will need to create a .env file which resides in the spotify_project directory.  This file will need to include a CLIENT_SECRET, CLIENT_ID,
 and a REDIRECT_URI, each on their own line.  These can be obtained by registering an app in the Spotify Developer Portal: https://developer.spotify.com/
 
 ## Usage:
