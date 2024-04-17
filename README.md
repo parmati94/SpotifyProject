@@ -6,9 +6,14 @@ You will need to create a .env file which resides in the same directory as confi
 and a REDIRECT_URI, each on their own line.  These can be obtained by registering an app in the Spotify Developer Portal: https://developer.spotify.com/
 
 ## Usage:
-Install dependencies: ```pip install -r requirements.txt```
-Run main.py to start program: ```python -m spotify_project.main.main``` 
-or Start FastAPI & React: ```npm install```, then ```npm start```
+Install dependencies:  
+```pip install -r requirements.txt```
+
+Run main.py to start program:  
+```python -m spotify_project.main.main```
+
+or Start FastAPI & React:  
+```npm install```, then ```npm start```
 
 
 Currently, this script has the ability to:
