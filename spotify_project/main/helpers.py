@@ -4,7 +4,7 @@ from .config import *
 from .input import *
 import random
 
-sp = spotify_auth()
+# sp = spotify_auth()
 
 # Determines date and returns in specific format (Month-Day-Year)
 def get_date():
@@ -15,15 +15,15 @@ def get_date():
 
 
 # Retrieves current authenticated Spotify user
-def get_current_user():
+def get_current_user(sp):
     user_id = sp.me()['id']
     return user_id
 
 
 # Forces re-auth for spotify by deleting .cache
 def re_auth():
-    if os.path.exists("src/.cache"):
-            os.remove("src/.cache")
+    if os.path.exists(".cache"):
+            os.remove(".cache")
             print("Successfully removed login credentials.  You will need to re-authenticate.")
     
 
@@ -50,7 +50,7 @@ def playlist_exists_with_id(playlist_name):
 
 
 # retrieves user's top tracks in the short-term, size will always = 20
-def get_top_tracks():
+def get_top_tracks(sp):
     print('Getting top tracks...')
     top_tracks = sp.current_user_top_tracks(time_range='short_term', limit=20, offset=0)
     return top_tracks
@@ -103,7 +103,7 @@ def track_split(track_list, num):
 
 # Retrieves recommended tracks based from spotify API based on track_list seeds
 # num var is determined by size of 2d list (number of lists in the list - each list will always be 5 long)
-def get_recommendations(split_tracks, num):
+def get_recommendations(split_tracks, num, sp):
     recommendations = []
     print('Seeding recommendations...')
     for x in range(num):
@@ -123,7 +123,7 @@ def get_recommendations(split_tracks, num):
 
 # Creates playlist and populates with passed song list ('recommendations')
 # Currently defaults playlist to private
-def create_playlist(user, name, recommendations):
+def create_playlist(user, name, recommendations, sp):
     print('Creating playlist...')
     playlist = sp.user_playlist_create(user, name, public=False, collaborative=False, description="")
     playlist_id = playlist['id']
@@ -136,7 +136,7 @@ def get_playlist_data(playlist_id, playlist_offset=0):
 
 
 # Returns all playlists for the current users
-def get_all_playlists():
+def get_all_playlists(sp):
     list_of_playlists = sp.current_user_playlists()
     total_playlists = list_of_playlists['total']
     list_of_playlist_items = list_of_playlists['items']
@@ -154,8 +154,8 @@ def get_all_playlists():
 
 
 # Takes playlist name and returns list of all playlist ID's that correspond to that name
-def get_playlist_ids_with_name(name):
-    list_of_playlists = get_all_playlists()
+def get_playlist_ids_with_name(name, sp):
+    list_of_playlists = get_all_playlists(sp)
     playlists_with_name = []
 
     for playlist in list_of_playlists:
@@ -167,12 +167,12 @@ def get_playlist_ids_with_name(name):
 
 # Returns list of recommended tracks based on raw list of tracks
 # Max # of seeds for recommendations = 5 - lists in the split_tracks are always 5 long
-def get_recommendation_tracks(raw_track_list, num_lists):
+def get_recommendation_tracks(raw_track_list, num_lists, sp):
     track_list = create_track_list(raw_track_list)
 
     split_tracks = track_split(track_list, num_lists)
 
-    recommendations = get_recommendations(split_tracks, num_lists)
+    recommendations = get_recommendations(split_tracks, num_lists, sp)
 
     return recommendations
 
@@ -221,7 +221,7 @@ def extend_playlist(target_playlist_name, target_playlist_id, provide_options=Fa
 
 
 # Deletes playlists based on each playlist ID in playlist_id list
-def delete_playlists(name, playlist_ids):
+def delete_playlists(name, playlist_ids, sp):
     count = 0
 
     if playlist_ids:

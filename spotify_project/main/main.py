@@ -9,15 +9,15 @@ date = get_date()
 
 # Driver function for menu option #1
 # Creates standard recommendation playlist based on a user's top tracks
-def create_daily_recommendation_playlist(name, num_lists):
-    top_tracks = get_top_tracks() 
+def create_daily_recommendation_playlist(name, num_lists, sp):
+    top_tracks = get_top_tracks(sp) 
 
-    recommendations = get_recommendation_tracks(top_tracks, num_lists)
+    recommendations = get_recommendation_tracks(top_tracks, num_lists, sp)
 
-    user = get_current_user()
+    user = get_current_user(sp)
     playlist_name = name
 
-    create_playlist(user, playlist_name, recommendations)
+    create_playlist(user, playlist_name, recommendations, sp)
 
     print(f"Playlist created with name: {playlist_name}")
     
@@ -37,9 +37,9 @@ def weekly_extended_playlist():
         
 # Driver function for menu option #3
 # Determines all playlists that exist with current date as name and passes to delete function
-def delete_all_daily_playlists():
-    playlist_ids = get_playlist_ids_with_name(date)
-    message = delete_playlists(date, playlist_ids)
+def delete_all_daily_playlists(sp):
+    playlist_ids = get_playlist_ids_with_name(date, sp)
+    message = delete_playlists(date, playlist_ids, sp)
     return message
     
 

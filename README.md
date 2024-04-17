@@ -25,3 +25,42 @@ Currently, this script has the ability to:
 5. Extend any existing playlist with either a) recommendations for you based on your top tracks or b) recommendations based on an existing playlist
 
 
+
+```
+SpotifyProject
+├─ client
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ public
+│  │  ├─ favicon.ico
+│  │  ├─ index.html
+│  │  ├─ logo192.png
+│  │  ├─ logo512.png
+│  │  ├─ manifest.json
+│  │  └─ robots.txt
+│  ├─ README.md
+│  └─ src
+│     ├─ App.css
+│     ├─ App.js
+│     ├─ App.test.js
+│     ├─ index.css
+│     ├─ index.js
+│     ├─ logo.svg
+│     ├─ reportWebVitals.js
+│     └─ setupTests.js
+├─ package-lock.json
+├─ package.json
+├─ README.md
+└─ spotify_project
+   ├─ api
+   │  ├─ controller.py
+   │  └─ __init__.py
+   ├─ main
+   │  ├─ config.py
+   │  ├─ helpers.py
+   │  ├─ input.py
+   │  ├─ main.py
+   │  └─ __init__.py
+   └─ __init__.py
+
+```
