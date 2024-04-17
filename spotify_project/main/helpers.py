@@ -1,10 +1,10 @@
 import os
 from datetime import datetime
-import setup.config as config
-from input import *
+from .config import *
+from .input import *
 import random
 
-sp = config.spotify_auth()
+sp = spotify_auth()
 
 # Determines date and returns in specific format (Month-Day-Year)
 def get_date():
@@ -22,8 +22,8 @@ def get_current_user():
 
 # Forces re-auth for spotify by deleting .cache
 def re_auth():
-    if os.path.exists(".cache"):
-            os.remove(".cache")
+    if os.path.exists("src/.cache"):
+            os.remove("src/.cache")
             print("Successfully removed login credentials.  You will need to re-authenticate.")
     
 
@@ -228,7 +228,9 @@ def delete_playlists(name, playlist_ids):
         for playlist_id in playlist_ids:
             sp.current_user_unfollow_playlist(playlist_id)
             count += 1
-        print(f"Deleted {count} playlist(s) with name: {name}")
+        message = f"Deleted {count} playlist(s) with name: {name}"
+        print(message)
+        return message
     else:
         print(f"No playlists exist with name: {name}")
 

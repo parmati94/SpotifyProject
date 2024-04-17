@@ -1,6 +1,8 @@
-import setup.config as config
-from input import *
-from helpers import *
+from .config import *
+from .input import *
+from .helpers import *
+
+# Import issues? Read https://stackoverflow.com/questions/74624111/application-runs-with-uvicorn-but-cant-find-module-no-module-named-app
 
 date = get_date()
 
@@ -8,7 +10,7 @@ date = get_date()
 # Driver function for menu option #1
 # Creates standard recommendation playlist based on a user's top tracks
 def create_daily_recommendation_playlist(name, num_lists):
-    top_tracks = get_top_tracks()
+    top_tracks = get_top_tracks() 
 
     recommendations = get_recommendation_tracks(top_tracks, num_lists)
 
@@ -18,6 +20,8 @@ def create_daily_recommendation_playlist(name, num_lists):
     create_playlist(user, playlist_name, recommendations)
 
     print(f"Playlist created with name: {playlist_name}")
+    
+    return f'Daily playlist created with name: {playlist_name}'
     
     
 # Driver function for menu option #2
@@ -35,19 +39,20 @@ def weekly_extended_playlist():
 # Determines all playlists that exist with current date as name and passes to delete function
 def delete_all_daily_playlists():
     playlist_ids = get_playlist_ids_with_name(date)
-    delete_playlists(date, playlist_ids)
+    message = delete_playlists(date, playlist_ids)
+    return message
     
 
 # Driver function for menu option #4
 # Creates playlist of size 80 based off of another playlist
-def create_playlist_from_playlist():
+def create_playlist_from_playlist(source_playlist_name=None, target_playlist_name=None):
     print_all_playlist_names()
-    source_playlist_name = get_source_playlist_name()
+    source_playlist_name = get_source_playlist_name(source_playlist_name)
     playlist_exists, playlist_id = playlist_exists_with_id(source_playlist_name)
     if playlist_exists:
         recommended_tracks = get_recommendations_from_playlist(source_playlist_name, playlist_id, 4)
         if recommended_tracks:
-            target_playlist_name = get_new_playlist_name()
+            target_playlist_name = get_new_playlist_name(target_playlist_name)
             create_playlist(get_current_user(), target_playlist_name, recommended_tracks)
             print(f"Playlist created: {target_playlist_name}")
         elif not recommended_tracks:
@@ -58,7 +63,7 @@ def create_playlist_from_playlist():
 
 # Driver function for menu option #5
 # Extends playlist that already exists with recommended songs
-def extend_existing_playlist():
+def extend_existing_playlist(target_playlist_name=None):
     print_all_playlist_names()
     target_playlist_name = get_target_playlist_name()
     playlist_exists, playlist_id = playlist_exists_with_id(target_playlist_name)
@@ -73,7 +78,7 @@ def help_menu():
 # This is a main function...
 def main():
 
-    sp = config.spotify_auth()
+    sp = spotify_auth()
     sp.current_user() # Call must be made on 'sp' return object to force authorization prior to selecting menu options
     
     choice = 0

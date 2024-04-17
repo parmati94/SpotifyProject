@@ -28,13 +28,13 @@ def print_menu_options():
     return int(choice)
 
 
-def playlist_type_options():
-    print('\nSelect option for playlist type: \n')
-    print('1. Recommendations based on top songs')
-    print('2. Recommendations based on existing playlist')
-
-    choice = int(input("\nInput #: "))
-    print("\n")
+def playlist_type_options(choice=None):
+    if choice is None:
+        print('\nSelect option for playlist type: \n')
+        print('1. Recommendations based on top songs')
+        print('2. Recommendations based on existing playlist')   
+        choice = int(input("\nInput #: "))
+        print("\n")
 
     if choice in playlist_types:
         return choice
@@ -43,15 +43,15 @@ def playlist_type_options():
         exit(0)
 
 
-def playlist_size_options():
-    print('\nSelect option for number of songs to add: \n')
-    print('1. 20 songs')
-    print('2. 40 songs')
-    print('3. 60 songs')
-    print('4. 80 songs')
-
-    choice = int(input("\nInput #: "))
-    print("\n")
+def playlist_size_options(choice=None):
+    if choice is None:
+        print('\nSelect option for number of songs to add: \n')
+        print('1. 20 songs')
+        print('2. 40 songs')
+        print('3. 60 songs')
+        print('4. 80 songs')
+        choice = int(input("\nInput #: "))
+        print("\n")
 
     if choice in playlist_sizes:
         return choice
@@ -75,15 +75,18 @@ def print_help_menu():
     print("Removes cached spotify credentials which will force a re-authentication when restarting the program.\n")
 
 
-def get_new_playlist_name():
-    playlist_name = input("Enter name for new playlist: ")
+def get_new_playlist_name(playlist_name=None):
+    if playlist_name is None:
+        playlist_name = input("Enter name for new playlist: ")
     return playlist_name
 
 
-def get_source_playlist_name():
-    playlist_name = input("Enter source playlist name to use for recommendations: ")
+def get_source_playlist_name(playlist_name=None):
+    if playlist_name is None:
+        playlist_name = input("Enter source playlist name to use for recommendations: ")
     return playlist_name
 
-def get_target_playlist_name():
-    target_playlist = input("Enter existing playlist name to extend: ")
+def get_target_playlist_name(target_name=None):
+    if target_name is None:
+        target_playlist = input("Enter existing playlist name to extend: ")
     return target_playlist

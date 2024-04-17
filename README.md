@@ -2,16 +2,14 @@
 
 ## Setup:
 
-The following dependencies are needed: <br />
-spotipy - ```pip3 install spotipy``` <br />
-dotenv - ```pip3 install python-dotenv```
-
-Additionally, you will need to create a .env file which resides in the same directory as config.py (src/setup).  This file will need to include a CLIENT_SECRET, CLIENT_ID,
+You will need to create a .env file which resides in the same directory as config.py (src/setup).  This file will need to include a CLIENT_SECRET, CLIENT_ID,
 and a REDIRECT_URI, each on their own line.  These can be obtained by registering an app in the Spotify Developer Portal: https://developer.spotify.com/
 
 ## Usage:
+Install dependencies: ```pip install -r requirements.txt```
+Run main.py to start program: ```python -m spotify_project.main.main``` 
+or Start FastAPI & React: ```npm install```, then ```npm start```
 
-Run main.py to start program: ```python3 main.py``` 
 
 Currently, this script has the ability to:
 

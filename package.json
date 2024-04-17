@@ -1,0 +1,16 @@
+{
+  "name": "spotifyproject",
+  "version": "1.0.0",
+  "description": "The following dependencies are needed: <br />\r spotipy - ```pip3 install spotipy``` <br />\r dotenv - ```pip3 install python-dotenv```",
+  "main": "index.js",
+  "scripts": {
+    "setup": "npm install && cd client && npm install",
+    "start": "concurrently \"npm --prefix client start\" \"python start_server.py\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
