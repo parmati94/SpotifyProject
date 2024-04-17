@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "npm install && cd client && npm install",
-    "start": "concurrently \"npm --prefix client start\" \"python start_server.py\""
+    "start": "concurrently \"npm --prefix client start\" \"uvicorn spotify_project.api.controller:app --reload\""
   },
   "keywords": [],
   "author": "",
