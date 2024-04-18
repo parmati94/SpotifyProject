@@ -9,12 +9,10 @@ and a REDIRECT_URI, each on their own line.  These can be obtained by registerin
 Install dependencies:  
 ```pip install -r requirements.txt```
 
-Run main.py to start program:  
-```python -m spotify_project.main.main```
-
 or Start FastAPI & React:  
 ```npm run setup```, then ```npm start```
 
+NOTE: Below instructions apply to previous iteration where app was only a cli interface.  Some of this functionality has no yet been added to the UI/API.
 
 Currently, this script has the ability to:
 
@@ -23,44 +21,3 @@ Currently, this script has the ability to:
 3. Delete all of the daily playlists that were created for the day (from #1).
 4. Create an 80 song playlist based off of an existing playlist.
 5. Extend any existing playlist with either a) recommendations for you based on your top tracks or b) recommendations based on an existing playlist
-
-
-
-```
-SpotifyProject
-├─ client
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ public
-│  │  ├─ favicon.ico
-│  │  ├─ index.html
-│  │  ├─ logo192.png
-│  │  ├─ logo512.png
-│  │  ├─ manifest.json
-│  │  └─ robots.txt
-│  ├─ README.md
-│  └─ src
-│     ├─ App.css
-│     ├─ App.js
-│     ├─ App.test.js
-│     ├─ index.css
-│     ├─ index.js
-│     ├─ logo.svg
-│     ├─ reportWebVitals.js
-│     └─ setupTests.js
-├─ package-lock.json
-├─ package.json
-├─ README.md
-└─ spotify_project
-   ├─ api
-   │  ├─ controller.py
-   │  └─ __init__.py
-   ├─ main
-   │  ├─ config.py
-   │  ├─ helpers.py
-   │  ├─ input.py
-   │  ├─ main.py
-   │  └─ __init__.py
-   └─ __init__.py
-
-```
