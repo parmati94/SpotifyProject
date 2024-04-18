@@ -39,8 +39,8 @@ def print_all_playlist_names():
 # Returns tuple with boolean and playlist ID to denote if playlist name passed already exists for user
 # This may be replaced later if separating functionality
 #  between getting playlist_exists & get_playlist_id makes more sense
-def playlist_exists_with_id(playlist_name):
-    list_of_playlist_items = get_all_playlists()
+def playlist_exists_with_id(playlist_name, sp):
+    list_of_playlist_items = get_all_playlists(sp)
 
     for item in list_of_playlist_items:
         if item['name'] == playlist_name:
@@ -130,7 +130,7 @@ def create_playlist(user, name, recommendations, sp):
     add_tracks = sp.playlist_add_items(playlist_id, recommendations)
 
 
-def get_playlist_data(playlist_id, playlist_offset=0):
+def get_playlist_data(playlist_id, sp, playlist_offset=0):
     playlist_data = sp.playlist_items(playlist_id, offset=playlist_offset)
     return playlist_data
 
@@ -178,7 +178,7 @@ def get_recommendation_tracks(raw_track_list, num_lists, sp):
 
 
 # Makes call to API to extend existing playlist after determining playlist ID
-def add_songs_to_playlist(play_id, tracks):
+def add_songs_to_playlist(play_id, tracks, sp):
     add_tracks = sp.playlist_add_items(playlist_id=play_id, items=tracks)
     if add_tracks:
         return True
@@ -187,7 +187,7 @@ def add_songs_to_playlist(play_id, tracks):
 # Checks if playlist specified exists
 # If exists, retrieves recommended tracks (40) and adds to playlist
 # If does not exist, creates playlist with specified name and adds recommended tracks (40)
-def extend_playlist(target_playlist_name, target_playlist_id, provide_options=False):  
+def extend_playlist(target_playlist_name, target_playlist_id, sp, provide_options=False):  
 
     if provide_options:
         type_choice = playlist_type_options()
@@ -199,19 +199,19 @@ def extend_playlist(target_playlist_name, target_playlist_id, provide_options=Fa
     if type_choice == 2:
         print_all_playlist_names()
         source_playlist_name = get_source_playlist_name()
-        playlist_exists, source_playlist_id = playlist_exists_with_id(source_playlist_name)
+        playlist_exists, source_playlist_id = playlist_exists_with_id(source_playlist_name, sp)
         if playlist_exists:
-            tracks = get_recommendations_from_playlist(source_playlist_name, source_playlist_id, size_choice)
+            tracks = get_recommendations_from_playlist(source_playlist_name, source_playlist_id, size_choice, sp)
         else:
             print("Playlist extension failed.  Source playlist does not exist.")
             return False
     else:
-        top_tracks = get_top_tracks()
-        tracks = get_recommendation_tracks(top_tracks, size_choice)
+        top_tracks = get_top_tracks(sp)
+        tracks = get_recommendation_tracks(top_tracks, size_choice, sp)
 
     if tracks:
         print(f"Adding songs to playlist: {target_playlist_name}")
-        success = add_songs_to_playlist(target_playlist_id, tracks)
+        success = add_songs_to_playlist(target_playlist_id, tracks, sp)
         if success:
             print(f"Songs added successfully to playlist: {target_playlist_name}")
             return True
@@ -236,14 +236,14 @@ def delete_playlists(name, playlist_ids, sp):
 
 
 # Retrieves recommendations based on playlist songs
-def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists):
-    playlist_data = get_playlist_data(playlist_id)
+def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists, sp):
+    playlist_data = get_playlist_data(playlist_id, sp)
     total_tracks = playlist_data['total']
     print(f"Total # of tracks: {total_tracks}")
     
     if total_tracks >= 20:
         playlist_offset = total_tracks - 20
-        playlist_data = get_playlist_data(playlist_id, playlist_offset)
+        playlist_data = get_playlist_data(playlist_id, sp, playlist_offset)
         recommended_tracks = get_recommendation_tracks(playlist_data['items'], num_lists)
 
         return recommended_tracks

@@ -26,13 +26,15 @@ def create_daily_recommendation_playlist(name, num_lists, sp):
     
 # Driver function for menu option #2
 # Creates or extends Weekly Extended Playlist
-def weekly_extended_playlist():
-    playlist_exists, playlist_id = playlist_exists_with_id('Weekly Extended Playlist')
+def weekly_extended_playlist(sp):
+    playlist_exists, playlist_id = playlist_exists_with_id('Weekly Extended Playlist', sp)
     if playlist_exists:
-        extend_playlist('Weekly Extended Playlist', playlist_id, provide_options=False)
+        extend_playlist('Weekly Extended Playlist', playlist_id, sp, provide_options=False)
+        return f'Weekly playlist has been extended.'
     else:
         print("Weekly Extended Playlist does not exist.  Creating playlist and adding songs...")
-        create_daily_recommendation_playlist('Weekly Extended Playlist', 2)
+        create_daily_recommendation_playlist('Weekly Extended Playlist', 2, sp)
+        return f'Daily playlist created with name: Weekly Extended Playlist'
         
         
 # Driver function for menu option #3

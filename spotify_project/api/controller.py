@@ -112,6 +112,11 @@ async def daily_rec(request: Request, sp: spotipy.Spotify = Depends(get_spotify)
     name = create_daily_recommendation_playlist(date, 4, sp)
     return {"message": name}
 
+@app.put("/add_weekly")
+async def weekly_rec(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):
+    name = weekly_extended_playlist(sp)
+    return {"message": name}
+
 @app.put("/delete_daily")
 async def delete_daily(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):
     message = delete_all_daily_playlists(sp)
