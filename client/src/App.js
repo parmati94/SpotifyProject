@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import Header from "./Components/Header.js";
+import Button from "./Components/Button.js";
 
 function App() {
   const [data, setData] = useState(null);
@@ -6,16 +8,19 @@ function App() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const loginStatus = urlParams.get('login');
-    if (loginStatus === 'success') {
+    const loginStatus = urlParams.get("login");
+    if (loginStatus === "success") {
       setIsLoggedIn(true);
     }
   }, []);
 
-  const handleClick = async (endpoint, method = 'GET') => {
-    const response = await fetch(`http://localhost:8000/${endpoint}`, { method });
-    
-    if (response.ok) { // Check if the response status is 200
+  const handleClick = async (endpoint, method = "GET") => {
+    const response = await fetch(`http://localhost:8000/${endpoint}`, {
+      method,
+    });
+
+    if (response.ok) {
+      // Check if the response status is 200
       var data = await response.json();
       setData(data.message);
     } else {
@@ -23,29 +28,46 @@ function App() {
     }
   };
 
-  const handleLogin = () => {
-    window.location.href = 'http://localhost:8000/login';
-  };
+  function handleLogin() {
+    window.location.href = "http://localhost:8000/login";
+  }
 
   return (
-    <div className="App" style={{ backgroundColor: '#000000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100vh', gap: '20px', paddingTop: '20px' }}>
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-around', marginBottom: '20px' }}>
-        <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={handleLogin}>Login with Spotify</button>
+    <>
+      <Header handleFn={() => handleLogin()} loggedIn={isLoggedIn} />
+      <div>
         {isLoggedIn && (
-          <>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('add_daily', 'PUT')}>Add Daily Playlist</button>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('delete_daily', 'PUT')}>Delete All Daily Playlists</button>
-          </>
+          <container className="center">
+            <Button
+              label="Get All Playlists"
+              handler={() => handleClick("get_all_playlists")}
+            />
+            <Button
+              label="Add Daily Playlist"
+              handler={() => handleClick("add_daily", "PUT")}
+            />
+            <Button
+              label="Delete All Daily Playlists"
+              handler={() => handleClick("delete_daily", "PUT")}
+            />
+          </container>
         )}
       </div>
 
-      {data && 
-        <div style={{ maxHeight: '600px', overflowY: 'scroll', width: '100%', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px', textAlign: 'center' }}>
-          {Array.isArray(data) ? data.map((item, index) => <p key={index} style={{ lineHeight: '1' }}>{item}</p>) : <p>{data}</p>}
+      {data && (
+        <div className="center">
+          {Array.isArray(data) ? (
+            data.map((item, index) => (
+              <p key={index} style={{ lineHeight: "1" }}>
+                {item}
+              </p>
+            ))
+          ) : (
+            <p id="datalist">{data}</p>
+          )}
         </div>
-      }
-    </div>
+      )}
+    </>
   );
 }
 
