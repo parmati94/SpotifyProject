@@ -25,7 +25,8 @@ function App() {
   };
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:8000/login';
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+    window.location.href = `${baseUrl}/login`;
   };
 
   return (
