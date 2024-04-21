@@ -3,7 +3,7 @@
 FROM node:14 as build-deps
 WORKDIR /usr/src/app
 COPY package*.json ./
-RUN npm setup
+RUN npm install
 COPY . ./
 RUN npm run build
 
