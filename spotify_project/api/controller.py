@@ -28,7 +28,8 @@ load_dotenv(dotenv_path)
 
 SECRET = os.getenv('CLIENT_SECRET')
 ID = os.getenv('CLIENT_ID')
-REDIRECT_URI = os.getenv('REDIRECT_URI')
+REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://localhost:8000/callback')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 origins = [
     "http://localhost:3000",  # React app's address
@@ -85,12 +86,12 @@ def callback(request: Request):
     access_token = token_info['access_token']
     if 'access_token' not in token_info:
         # Redirect back to frontend with login=failure
-        return RedirectResponse(url='http://localhost:3000/?login=failure')
+        return RedirectResponse(url=f'{FRONTEND_URL}/?login=failure')
     # request.session["access_token"] = access_token
     logging.info(f"Access token stored in session: {access_token}")
     # access_token2 = request.session.get("access_token")
     # logging.info(f"Access token retrieved in callback: {access_token2}")
-    return RedirectResponse(url='http://localhost:3000/?login=success')  # Redirect to the home page or any other page
+    return RedirectResponse(url=f'{FRONTEND_URL}/?login=success')  # Redirect to the home page or any other page
 
 @app.get("/get_all_playlists")
 async def all_playlists(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):
