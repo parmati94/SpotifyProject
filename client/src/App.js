@@ -13,7 +13,8 @@ function App() {
   }, []);
 
   const handleClick = async (endpoint, method = 'GET') => {
-    const response = await fetch(`http://localhost:8000/${endpoint}`, { method });
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+    const response = await fetch(`${baseUrl}/${endpoint}`, { method });
     
     if (response.ok) { // Check if the response status is 200
       var data = await response.json();
