@@ -49,8 +49,6 @@ async def read_root():
     print('SP: {sp}')
     return {"Meow"}
 
-REDIRECT_URI = 'http://localhost:8000/callback'  # Modify this according to your setup
-
 def get_spotify(request: Request) -> spotipy.Spotify:
     #access_token = request.session.get("access_token")
     global access_token
