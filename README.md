@@ -2,7 +2,7 @@
 
 ## Setup:
 
-You will need to create a .env file which resides in the spotify_project directory.  This file will need to include a CLIENT_SECRET and a CLIENT_ID, each on their own line.  These can be obtained by registering an app in the Spotify Developer Portal: https://developer.spotify.com/.
+You will need to create a .env file which resides in the spotify_project directory (see .env.example).  This file will need to include a CLIENT_SECRET and a CLIENT_ID, each on their own line.  These can be obtained by registering an app in the Spotify Developer Portal: https://developer.spotify.com/.
 
 If you intend to simply run this without docker, your REDIRECT_URI will be hard set to http://localhost:8000/callback. Make sure to add this to 'Redirect URIs' in your Spotify Developer Portal by going to Dashboard ---> Settings.
 
@@ -14,6 +14,10 @@ or Start FastAPI & React:
 ```npm run setup```, then ```npm start```
 
 ## Docker
+Since a .env is required with your own Spotify Developer credentials for the time being, you'll need to build both images locally:
+`docker build -t spotifyproject-frontend:latest -f ./client/Dockerfile ./client`
+`docker build -t spotifyproject-api:latest -f ./spotify_project/Dockerfile ./spotify_project`
+
 The start the application with Docker Compose, use the provided docker-compose.yml.  Make sure to either fill in the placeholders manually, or set the intended values as environment variables on your machine prior to running docker-compose up.
 
 Here are the environment variables you need to set:
