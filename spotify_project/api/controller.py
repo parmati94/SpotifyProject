@@ -31,13 +31,13 @@ ID = os.getenv('CLIENT_ID')
 REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://localhost:8000/callback')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
-origins = [
-    "http://localhost:3000",  # React app's address
-]
+# origins = [
+#     "http://localhost:3000",  # React app's address
+# ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
