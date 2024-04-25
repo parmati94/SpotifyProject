@@ -1,0 +1,17 @@
+version: '3'
+services:
+  frontend:
+    image: spotifyproject-frontend:latest
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    depends_on:
+      - api
+    environment:
+      - REACT_APP_API_BASE_URL=http://${API_HOST}:${API_PORT}
+  api:
+    image: spotifyproject-api:latest
+    ports:
+      - "${API_PORT}:8000"
+    environment:
+      - REDIRECT_URI=http://${API_HOST}:${API_PORT}/callback
+      - FRONTEND_URL=http://${FRONTEND_HOST}:${FRONTEND_PORT}
