@@ -17,8 +17,7 @@ def spotify_auth(sp_oauth=None):
 
         SECRET = os.getenv('CLIENT_SECRET')
         ID = os.getenv('CLIENT_ID')
-        print(ID)
-        REDIRECT_URI = os.getenv('REDIRECT_URI')
+        REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://localhost:8000/callback')
 
         if sp_oauth is None:
                 sp = SpotifyOAuth(scope=scope, client_id=ID,

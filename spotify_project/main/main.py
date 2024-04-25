@@ -4,9 +4,6 @@ from .helpers import *
 
 # Import issues? Read https://stackoverflow.com/questions/74624111/application-runs-with-uvicorn-but-cant-find-module-no-module-named-app
 
-date = get_date()
-
-
 # Driver function for menu option #1
 # Creates standard recommendation playlist based on a user's top tracks
 def create_daily_recommendation_playlist(name, num_lists, sp):
@@ -40,8 +37,8 @@ def weekly_extended_playlist(sp):
 # Driver function for menu option #3
 # Determines all playlists that exist with current date as name and passes to delete function
 def delete_all_daily_playlists(sp):
-    playlist_ids = get_playlist_ids_with_name(date, sp)
-    message = delete_playlists(date, playlist_ids, sp)
+    playlist_ids = get_playlist_ids_with_name(get_date(), sp)
+    message = delete_playlists(get_date(), playlist_ids, sp)
     return message
     
 
@@ -92,7 +89,7 @@ def main():
         if choice == -1:
             print("Invalid input provided.  Input must be an integer value included on the menu.")
         elif choice == 1:
-            create_daily_recommendation_playlist(date, 4)
+            create_daily_recommendation_playlist(get_date(), 4)
         elif choice == 2:
             weekly_extended_playlist()
         elif choice == 3:

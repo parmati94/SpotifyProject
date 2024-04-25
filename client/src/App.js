@@ -13,7 +13,8 @@ function App() {
   }, []);
 
   const handleClick = async (endpoint, method = 'GET') => {
-    const response = await fetch(`http://localhost:8000/${endpoint}`, { method });
+    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+    const response = await fetch(`${baseUrl}/${endpoint}`, { method });
     
     if (response.ok) { // Check if the response status is 200
       var data = await response.json();
@@ -24,7 +25,8 @@ function App() {
   };
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:8000/login';
+    const baseUrl = window._env_.REACT_APP_API_BASE_URL  || 'http://localhost:8000';
+    window.location.href = `${baseUrl}/login`;
   };
 
   return (
