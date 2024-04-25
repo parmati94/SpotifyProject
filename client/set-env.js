@@ -6,7 +6,7 @@ const path = require('path');
 const REACT_APP_API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 // Path to env-config.js
-const configPath = path.join(__dirname, 'build', 'env-config.js');
+const configPath = path.join(__dirname, 'public', 'env-config.js');
 
 // Read env-config.js
 const configData = fs.readFileSync(configPath, 'utf8');
