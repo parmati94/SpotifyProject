@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 #sp = spotify_auth()
 
 dotenv_path = join(dirname(dirname(__file__)), '.env')
-load_dotenv(dotenv_path)
+load_dotenv(dotenv_path, override=True)
 
 SECRET = os.getenv('CLIENT_SECRET')
 ID = os.getenv('CLIENT_ID')

@@ -7,6 +7,7 @@ function App() {
   const [newPlaylist, setNewPlaylist] = useState('');
   const [playlists, setPlaylists] = useState([]);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState('');
 
   const fetchPlaylists = useCallback(async () => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -29,6 +30,13 @@ function App() {
       setIsLoggedIn(true);
       fetchPlaylists();
     }
+    const timeoutId = setTimeout(() => {
+      setIsLoggedIn(false);
+      setData(null);
+      setLogoutMessage('You have been logged out. Please log back in.');
+    }, 60 * 30 * 1000);
+
+    return () => clearTimeout(timeoutId);
   }, [setIsLoggedIn, fetchPlaylists]);
 
   useEffect(() => {
@@ -74,7 +82,14 @@ function App() {
   return (
     <div className="App" style={{ backgroundColor: '#000000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100vh', gap: '20px', paddingTop: '20px' }}>
       <div style={{ width: '100%', display: 'flex', justifyContent: 'space-around', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={handleLogin}>Login with Spotify</button>
+        {logoutMessage && 
+          <div style={{ color: '#fff', marginTop: '10px' }}>
+            <p>{logoutMessage}</p>
+          </div>
+        }
+      </div>
         {isLoggedIn && (
           <>
           <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
@@ -100,8 +115,8 @@ function App() {
         )}
       </div>
       {!showCreatePlaylist && data && 
-        <div style={{ maxHeight: '600px', overflowY: 'scroll', width: '100%', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '5px', textAlign: 'center' }}>
-          {Array.isArray(data) ? data.map((item, index) => <p key={index} style={{ lineHeight: '1' }}>{item}</p>) : <p>{data}</p>}
+        <div style={{maxHeight:'600px', overflowY:'scroll', width:'100%', backgroundColor:'#cbf6c0', padding:'20px', borderRadius:'5px', textAlign:'center', margin:'20px 0', border:'1px solid #ccc', fontFamily:'Arial, sans-serif', color:'#333'}}>
+          {Array.isArray(data) ? data.map((item, index) => <p key={index} style={{ lineHeight: '1.5', margin: '10px 0' }}>{item}</p>) : <p>{data}</p>}
         </div>
       }
     </div>
