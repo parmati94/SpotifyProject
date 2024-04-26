@@ -5,8 +5,11 @@ const path = require('path');
 // Provide a default value if the environment variable is empty
 const REACT_APP_API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
+// Check if the build directory exists
+const buildDirExists = fs.existsSync(path.join(__dirname, 'build'));
+
 // Path to env-config.js
-const configPath = path.join(__dirname, 'public', 'env-config.js');
+const configPath = path.join(__dirname, buildDirExists ? 'build' : 'public', 'env-config.js');
 
 // Read env-config.js
 const configData = fs.readFileSync(configPath, 'utf8');

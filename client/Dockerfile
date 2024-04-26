@@ -7,13 +7,8 @@ RUN npm install
 COPY . ./
 RUN npm run build
 
-COPY env.sh ./
-RUN chmod +x ./env.sh
+COPY set-env.js ./
+RUN chmod +x ./set-env.js
 
 RUN npm install -g serve
-CMD ["/bin/bash", "-c", "./env.sh && serve -s build -l 3000"]
-
-# FROM nginx:1.17.8-alpine
-# COPY --from=build-deps /usr/src/app/build /usr/share/nginx/html
-# EXPOSE 80
-# CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/bash", "-c", "node set-env.js && serve -s build -l 3000"]
