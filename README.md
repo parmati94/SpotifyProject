@@ -14,9 +14,11 @@ or Start FastAPI & React:
 ```npm run setup```, then ```npm start```
 
 ## Docker
-Since a .env is required with your own Spotify Developer credentials for the time being, you'll need to build both images locally:
-`docker build -t spotifyproject-frontend:latest -f ./client/Dockerfile ./client`
-`docker build -t spotifyproject-api:latest -f ./spotify_project/Dockerfile ./spotify_project`
+Since a `.env` is required with your own Spotify Developer credentials for the time being, you'll need to build both images locally:
+```bash
+docker build -t spotifyproject-frontend:latest -f ./client/Dockerfile ./client
+docker build -t spotifyproject-api:latest -f ./spotify_project/Dockerfile ./spotify_project
+```
 
 The start the application with Docker Compose, use the provided docker-compose.yml.  Make sure to either fill in the placeholders manually, or set the intended values as environment variables on your machine prior to running docker-compose up.
 
