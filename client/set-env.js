@@ -11,8 +11,8 @@ const configPath = path.join(__dirname, 'public', 'env-config.js');
 // Read env-config.js
 const configData = fs.readFileSync(configPath, 'utf8');
 
-// Replace placeholders with environment variables
-const result = configData.replace(/\$REACT_APP_API_BASE_URL/g, REACT_APP_API_BASE_URL);
+// Replace the entire line containing REACT_APP_API_BASE_URL with the new value
+const result = configData.replace(/(REACT_APP_API_BASE_URL: ).*?(,)?$/gm, `$1"${REACT_APP_API_BASE_URL}"$2`);
 
 // Write the result back to env-config.js
 fs.writeFileSync(configPath, result, 'utf8');

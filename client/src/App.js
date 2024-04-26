@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import './App.css';
 
 function App() {
   const [data, setData] = useState(null);
@@ -80,43 +81,43 @@ function App() {
   };
 
   return (
-    <div className="App" style={{ backgroundColor: '#000000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100vh', gap: '20px', paddingTop: '20px' }}>
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'space-around', marginBottom: '20px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={handleLogin}>Login with Spotify</button>
-        {logoutMessage && 
-          <div style={{ color: '#fff', marginTop: '10px' }}>
-            <p>{logoutMessage}</p>
-          </div>
-        }
-      </div>
+    <div className="App">
+      <div className="button-group">
+        <div className="login-section">
+          <button onClick={handleLogin}>Login with Spotify</button>
+          {logoutMessage && 
+            <div className="logout-message">
+              <p>{logoutMessage}</p>
+            </div>
+          }
+        </div>
         {isLoggedIn && (
           <>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('add_daily', 'PUT')}>Add Daily Playlist</button>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleClick('delete_daily', 'PUT')}>Delete All Daily Playlists</button>
-          <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => setShowCreatePlaylist(prevState => !prevState)}>Create Playlist</button>
-          {showCreatePlaylist && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-              <h2 style={{ color: '#fff', marginBottom: '20px' }}>Create a Playlist Based on an Existing One 😮</h2>
-              <select style={{ display: 'block', margin: '20px 0', padding: '10px', fontSize: '16px', fontFamily: 'Arial, sans-serif', width: '100%', boxSizing: 'border-box' }} value={existingPlaylist} onChange={(e) => setExistingPlaylist(e.target.value)}>
-                {playlists.map((playlist) => (
-                  <option key={playlist} value={playlist}>
-                    {playlist}
-                  </option>
-                ))}
-              </select>
-              <input style={{ display: 'block', margin: '20px 0', padding: '10px', fontSize: '16px', fontFamily: 'Arial, sans-serif', width: '100%', boxSizing: 'border-box' }} type="text" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
-              <button style={{ padding: '10px', fontSize: '16px', backgroundColor: '#007BFF', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }} onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist)}>Submit</button>
-            </div>
-          )}
+            <button onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
+            <button onClick={() => handleClick('add_daily', 'PUT')}>Add Daily Playlist</button>
+            <button onClick={() => handleClick('add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
+            <button onClick={() => handleClick('delete_daily', 'PUT')}>Delete All Daily Playlists</button>
+            <button onClick={() => setShowCreatePlaylist(prevState => !prevState)}>Create Playlist</button>
+            {showCreatePlaylist && (
+              <div className="create-playlist">
+                <h2>Create a Playlist Based on an Existing One 😮</h2>
+                <select value={existingPlaylist} onChange={(e) => setExistingPlaylist(e.target.value)}>
+                  {playlists.map((playlist) => (
+                    <option key={playlist} value={playlist}>
+                      {playlist}
+                    </option>
+                  ))}
+                </select>
+                <input type="text" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
+                <button onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist)}>Submit</button>
+              </div>
+            )}
           </>
         )}
       </div>
       {!showCreatePlaylist && data && 
-        <div style={{maxHeight:'600px', overflowY:'scroll', width:'100%', backgroundColor:'#cbf6c0', padding:'20px', borderRadius:'5px', textAlign:'center', margin:'20px 0', border:'1px solid #ccc', fontFamily:'Arial, sans-serif', color:'#333'}}>
-          {Array.isArray(data) ? data.map((item, index) => <p key={index} style={{ lineHeight: '1.5', margin: '10px 0' }}>{item}</p>) : <p>{data}</p>}
+        <div className="data-display">
+          {Array.isArray(data) ? data.map((item, index) => <p key={index}>{item}</p>) : <p>{data}</p>}
         </div>
       }
     </div>

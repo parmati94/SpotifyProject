@@ -1,38 +1,84 @@
+/* App.css */
+
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
   background-color: #000000;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  justify-content: flex-start;
+  height: 100vh;
+  gap: 20px;
+  padding-top: 20px;
 }
 
-.App-link {
-  color: #61dafb;
+.App .button-group {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.App .button-group .login-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.App .button-group .login-section button,
+.App .button-group button {
+  padding: 10px;
+  font-size: 16px;
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.App .button-group .login-section .logout-message {
+  color: #fff;
+  margin-top: 10px;
+}
+
+.App .create-playlist {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.App .create-playlist h2 {
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.App .create-playlist select,
+.App .create-playlist input {
+  display: block;
+  margin: 20px 0;
+  padding: 10px;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.App .data-display {
+  max-height: 600px;
+  overflow-y: scroll;
+  width: 100%;
+  background-color: #cbf6c0;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+  margin: 20px 0;
+  border: 1px solid #ccc;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+.App .data-display p {
+  line-height: 1.5;
+  margin: 10px 0;
 }
