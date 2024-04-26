@@ -28,8 +28,8 @@ def re_auth():
     
 
 # Print playlist names returned from get_all_playlists
-def print_all_playlist_names():
-    playlists = get_all_playlists()
+def print_all_playlist_names(sp):
+    playlists = get_all_playlists(sp)
     list_num = 1
     for playlist in playlists:
         print(f"{list_num}. {playlist['name']}")
@@ -244,7 +244,7 @@ def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists, sp)
     if total_tracks >= 20:
         playlist_offset = total_tracks - 20
         playlist_data = get_playlist_data(playlist_id, sp, playlist_offset)
-        recommended_tracks = get_recommendation_tracks(playlist_data['items'], num_lists)
+        recommended_tracks = get_recommendation_tracks(playlist_data['items'], num_lists, sp)
 
         return recommended_tracks
     else:

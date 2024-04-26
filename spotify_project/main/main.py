@@ -44,20 +44,23 @@ def delete_all_daily_playlists(sp):
 
 # Driver function for menu option #4
 # Creates playlist of size 80 based off of another playlist
-def create_playlist_from_playlist(source_playlist_name=None, target_playlist_name=None):
-    print_all_playlist_names()
+def create_playlist_from_playlist(source_playlist_name, target_playlist_name, sp):
+    print_all_playlist_names(sp)
     source_playlist_name = get_source_playlist_name(source_playlist_name)
-    playlist_exists, playlist_id = playlist_exists_with_id(source_playlist_name)
+    playlist_exists, playlist_id = playlist_exists_with_id(source_playlist_name, sp)
     if playlist_exists:
-        recommended_tracks = get_recommendations_from_playlist(source_playlist_name, playlist_id, 4)
+        recommended_tracks = get_recommendations_from_playlist(source_playlist_name, playlist_id, 4, sp)
         if recommended_tracks:
             target_playlist_name = get_new_playlist_name(target_playlist_name)
-            create_playlist(get_current_user(), target_playlist_name, recommended_tracks)
+            create_playlist(get_current_user(sp), target_playlist_name, recommended_tracks, sp)
             print(f"Playlist created: {target_playlist_name}")
+            return f"Playlist created: {target_playlist_name}"
         elif not recommended_tracks:
             print(f"Playlist creation failed.  Playlist must contain at least 20 tracks.")
+            return f"Playlist creation failed.  Playlist must contain at least 20 tracks."
     else:
         print(f"Playlist creation failed.  Source playlist must already exist.")
+        return f"Playlist creation failed.  Source playlist must already exist."
         
 
 # Driver function for menu option #5
