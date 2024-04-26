@@ -31,3 +31,14 @@ jobs:
         context: ./spotify_project
         push: true
         tags: parmati/spotifyproject-api:latest
+        
+    - name: Build and push private API Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: ./spotify_project
+        file: ./spotify_project/Dockerfile
+        push: true
+        tags: parmati/spotifyproject-api-private:latest
+        secrets: |
+          CLIENT_ID=${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}
