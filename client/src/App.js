@@ -6,6 +6,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [existingPlaylist, setExistingPlaylist] = useState('');
   const [newPlaylist, setNewPlaylist] = useState('');
+  const [numberOfSongs, setNumberOfSongs] = useState('');
   const [playlists, setPlaylists] = useState([]);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [logoutMessage, setLogoutMessage] = useState('');
@@ -77,12 +78,12 @@ function App() {
     window.location.href = `${baseUrl}/login`;
   };
 
-  const handleCreatePlaylist = async (source_playlist, target_playlist) => {
+  const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const options = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source_playlist, target_playlist }) // Send data as JSON in the body
+      body: JSON.stringify({ source_playlist, target_playlist, num_songs }) // Send data as JSON in the body
     };
     const response = await fetch(`${baseUrl}/create_playlist`, options);
 
@@ -125,7 +126,12 @@ function App() {
                   ))}
                 </select>
                 <input type="text" className="playlist-input" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
-                <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist)}>Submit</button>
+                <select className="playlist-input" value={numberOfSongs} onChange={(e) => setNumberOfSongs(e.target.value)}>
+                    {Array.from({length: 10}, (_, i) => (i + 1) * 20).map((value) => 
+                        <option key={value} value={value}>{value} songs</option>
+                    )}
+                </select>
+                <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist, numberOfSongs)}>Submit</button>
               </div>
             )}
           </>

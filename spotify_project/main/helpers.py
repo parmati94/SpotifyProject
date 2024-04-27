@@ -127,11 +127,13 @@ def create_playlist(user, name, recommendations, sp):
     print('Creating playlist...')
     playlist = sp.user_playlist_create(user, name, public=False, collaborative=False, description="")
     playlist_id = playlist['id']
-    add_tracks = sp.playlist_add_items(playlist_id, recommendations)
+    for i in range(0, len(recommendations), 100):
+        chunk = recommendations[i:i+100]
+        sp.playlist_add_items(playlist_id, chunk)
 
 
 def get_playlist_data(playlist_id, sp, playlist_offset=0):
-    playlist_data = sp.playlist_items(playlist_id, offset=playlist_offset)
+    playlist_data = sp.playlist_items(playlist_id, offset=playlist_offset, limit=100)
     return playlist_data
 
 
@@ -242,12 +244,17 @@ def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists, sp)
     total_tracks = playlist_data['total']
     print(f"Total # of tracks: {total_tracks}")
     
-    if total_tracks >= 20:
-        playlist_offset = total_tracks - 20
+    if total_tracks < 20:
+        return False, f"Playlist contains only {total_tracks} tracks. At least 20 tracks are required."
+    elif num_lists > total_tracks / 5:
+        max_songs = (total_tracks * 4) // 20 * 20
+        return False, f"Playlist has {total_tracks} songs - max number of songs in new playlist is {max_songs}."
+    else:
+        playlist_offset = total_tracks - (num_lists * 5)
+        print(f'Playlist offset: {playlist_offset}')
         playlist_data = get_playlist_data(playlist_id, sp, playlist_offset)
         recommended_tracks = get_recommendation_tracks(playlist_data['items'], num_lists, sp)
 
-        return recommended_tracks
-    else:
-        return None
+        return True, recommended_tracks
+
 

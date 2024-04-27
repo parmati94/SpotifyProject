@@ -121,5 +121,5 @@ async def delete_daily(request: Request, sp: spotipy.Spotify = Depends(get_spoti
 
 @app.put("/create_playlist")
 async def create_playlist(playlist: Playlist, sp: spotipy.Spotify = Depends(get_spotify)):
-    message = create_playlist_from_playlist(playlist.source_playlist, playlist.target_playlist, sp)
+    message = create_playlist_from_playlist(playlist.source_playlist, playlist.target_playlist, playlist.num_songs, sp)
     return {"message": message}
