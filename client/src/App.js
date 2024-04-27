@@ -4,6 +4,7 @@ import './App.css';
 function App() {
   const [data, setData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [existingPlaylist, setExistingPlaylist] = useState('');
   const [newPlaylist, setNewPlaylist] = useState('');
   const [numberOfSongs, setNumberOfSongs] = useState('');
@@ -45,6 +46,7 @@ function App() {
     if (loginStatus === 'success') {
       console.log('Login succeeded');
       setIsLoggedIn(true);
+      setIsLoading(false); 
       fetchPlaylists();
     }
     const timeoutId = setTimeout(() => {
@@ -62,20 +64,30 @@ function App() {
     }
   }, [data]);
 
+  useEffect(() => {
+  if (isLoading) {
+    setData(null);
+  }
+}, [isLoading]);
+
   const handleClick = async (endpoint, method = 'GET') => {
     setShowCreatePlaylist(false)
+    setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/${endpoint}`, { method });
 
     if (response.ok) { // Check if the response status is 200
       var data = await response.json();
+      setIsLoading(false);
       setData(data.message);
     } else {
+      setIsLoading(false);
       setData("Error: The operation could not be completed.");
     }
   };
 
   const handleLogin = () => {
+    setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     window.location.href = `${baseUrl}/login`;
   };
@@ -85,10 +97,12 @@ function App() {
     setPlaylistError('Please select an existing playlist.');
     return;
   }
-  if (!num_songs) {
-    setSongsError('Please select the number of songs.');
-    return;
-  }
+    if (!num_songs) {
+      setSongsError('Please select the number of songs.');
+      return;
+    }
+    setIsLoading(true);
+    setShowCreatePlaylist(false);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const options = {
       method: 'PUT',
@@ -101,10 +115,13 @@ function App() {
   
     if (response.ok) {
       const data = await response.json();
+      setIsLoading(false);
       setData(data.message);
     } else {
+      setIsLoading(false);
       setData("Error: The operation could not be completed.");
     }
+    setShowCreatePlaylist(true);
   };
 
   return (
@@ -151,6 +168,11 @@ function App() {
           </>
         )}
       </div>
+      {!showCreatePlaylist && isLoading && (
+        <div className="spinner">
+          <div className="double-bounce1"></div>
+          <div className="double-bounce2"></div>
+        </div>)}
       {!showCreatePlaylist && data &&
         <div className="data-display">
           {Array.isArray(data) ? data.map((item, index) => <p key={index}>{item}</p>) : <p>{data}</p>}
