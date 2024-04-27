@@ -10,6 +10,8 @@ function App() {
   const [playlists, setPlaylists] = useState([]);
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [logoutMessage, setLogoutMessage] = useState('');
+  const [playlistError, setPlaylistError] = useState('');
+  const [songsError, setSongsError] = useState('');
 
   const fetchPlaylists = useCallback(async () => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -79,6 +81,14 @@ function App() {
   };
 
   const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
+    if (!source_playlist) {
+    setPlaylistError('Please select an existing playlist.');
+    return;
+  }
+  if (!num_songs) {
+    setSongsError('Please select the number of songs.');
+    return;
+  }
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const options = {
       method: 'PUT',
@@ -118,19 +128,23 @@ function App() {
             {showCreatePlaylist && (
               <div className="create-playlist">
                 <h2>Create a Playlist Based on an Existing One 😮</h2>
-                <select className="playlist-select" value={existingPlaylist} onChange={(e) => setExistingPlaylist(e.target.value)}>
+                <select className="playlist-select" value={existingPlaylist} onChange={(e) => { setExistingPlaylist(e.target.value); setPlaylistError(''); }}>
+                  <option disabled value="">Select Existing Playlist</option>
                   {playlists.map((playlist) => (
                     <option key={playlist} value={playlist}>
                       {playlist}
                     </option>
                   ))}
                 </select>
-                <input type="text" className="playlist-input" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
-                <select className="playlist-input" value={numberOfSongs} onChange={(e) => setNumberOfSongs(e.target.value)}>
-                    {Array.from({length: 10}, (_, i) => (i + 1) * 20).map((value) => 
-                        <option key={value} value={value}>{value} songs</option>
-                    )}
+                {playlistError && <div className="error">{playlistError}</div>}
+                <select className="playlist-input" value={numberOfSongs} onChange={(e) => { setNumberOfSongs(e.target.value); setSongsError(''); }}>
+                  <option disabled value="">Select Number of Songs</option>
+                  {Array.from({length: 10}, (_, i) => (i + 1) * 20).map((value) => 
+                    <option key={value} value={value}>{value} songs</option>
+                  )}
                 </select>
+                {songsError && <div className="error">{songsError}</div>}
+                <input type="text" className="playlist-input" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
                 <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist, numberOfSongs)}>Submit</button>
               </div>
             )}

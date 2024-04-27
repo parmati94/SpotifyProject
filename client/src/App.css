@@ -194,3 +194,14 @@ body {
   height: 50px; /* Set a fixed height for the footer */
   color: #fff;
 }
+
+.error {
+  color: rgb(247, 46, 106);
+  padding: 0; /* Adjust as needed */
+  margin-bottom: 10px; /* Adjust as needed */
+  line-height: 1; /* Adjust as needed */
+  font-family: "Roboto Slab", serif; /* Change the font family */
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
