@@ -1,3 +1,6 @@
+import os
+import sys
+import logging
 from typing import Union
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,13 +9,10 @@ from fastapi import Depends
 from fastapi import HTTPException
 from spotipy.oauth2 import SpotifyOAuth
 from starlette.middleware.sessions import SessionMiddleware
-from pydantic import BaseModel
 from os.path import join, dirname
 from dotenv import load_dotenv
-import os
-import sys
-import logging
 sys.path.append("..")
+from .models import Playlist
 from ..main.helpers import *
 from ..main.main import *
 from ..main.config import *
@@ -52,11 +52,9 @@ async def read_root():
 def get_spotify(request: Request) -> spotipy.Spotify:
     #access_token = request.session.get("access_token")
     global access_token
-    logging.info(f"Access token retrieved in get_spotify: {access_token}")
     if access_token is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
     sp = spotify_auth(access_token)
-    logging.info(f"SP OBJECT: {sp}")
     return sp
 
 @app.get("/login")
@@ -122,6 +120,6 @@ async def delete_daily(request: Request, sp: spotipy.Spotify = Depends(get_spoti
     return {"message": message}
 
 @app.put("/create_playlist")
-async def create_playlist(request: Request, source_playlist, target_playlist, sp: spotipy.Spotify = Depends(get_spotify)):
-    message = create_playlist_from_playlist(source_playlist, target_playlist, sp)
+async def create_playlist(playlist: Playlist, sp: spotipy.Spotify = Depends(get_spotify)):
+    message = create_playlist_from_playlist(playlist.source_playlist, playlist.target_playlist, sp)
     return {"message": message}

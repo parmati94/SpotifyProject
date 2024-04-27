@@ -1,12 +1,18 @@
 /* App.css */
 
+body {
+  background-color: #000000; /* Set this to the same color as the .App container */
+  margin: 0;
+  padding: 0;
+}
+
 .App {
   background-color: #000000;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 100vh;
+  height: calc(100vh - 50px); /* Subtract the height of the footer */
   gap: 20px;
   padding-top: 20px;
 }
@@ -51,6 +57,10 @@
 .App .create-playlist h2 {
   color: #fff;
   margin-bottom: 20px;
+  font-family: "Roboto Slab", serif; /* Change the font family */
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
 }
 
 .App .create-playlist select,
@@ -67,18 +77,120 @@
 .App .data-display {
   max-height: 600px;
   overflow-y: scroll;
-  width: 100%;
-  background-color: #cbf6c0;
+  width: 85%; 
+  margin: 20px auto; 
+  background: linear-gradient(to right, #c1aaff, #a460f1);
   padding: 20px;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  transition: all 0.3s ease;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #888 transparent; /* Firefox */
+}
+
+.App .data-display:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+}
+
+/* Style the scrollbar track */
+.App .data-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Style the scrollbar handle */
+.App .data-display::-webkit-scrollbar-thumb {
+  background: #888; 
   border-radius: 5px;
-  text-align: center;
-  margin: 20px 0;
-  border: 1px solid #ccc;
-  font-family: Arial, sans-serif;
-  color: #333;
+}
+
+/* Handle on hover */
+.App .data-display::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+/* Style the scrollbar for Firefox */
+.App .data-display:hover {
+  scrollbar-color: #555 transparent; /* Change the scrollbar color on hover in Firefox */
 }
 
 .App .data-display p {
-  line-height: 1.5;
-  margin: 10px 0;
+  color: #000; /* Change the text color */
+  font-size: 16px; /* Change the font size */
+  line-height: 2; /* Change the line height */
+  font-family: "Roboto Slab", serif; /* Change the font family */
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  text-align: center;
+  margin-bottom: 10px; /* Add some space below each paragraph */
+  padding: 5px; /* Add some padding around the text */
+  border-bottom: 1px solid #000000; /* Add a border below each paragraph */
+  background-color: #f9f9f900; /* Add a background color */
+  /* Add any other styles you want for the paragraph elements */
+}
+
+.App .data-display p:last-child {
+  border-bottom: none; /* Remove the border from the last paragraph */
+}
+
+.playlist-select, .playlist-input {
+  color: #000000; /* Change the placeholder text color */
+  font-style: italic; /* Make the placeholder text italic */
+  font-family: "Roboto Slab", serif; /* Change the font family */
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.playlist-input::placeholder {
+  color: #8b8b8b; /* Change the placeholder text color */
+  font-style: italic; /* Make the placeholder text italic */
+  font-family: "Roboto Slab", serif; /* Change the font family */
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.App .btn {  
+  font-family: Arial, Helvetica, sans-serif;  
+  text-transform: uppercase;
+}
+
+.App .btn:hover .btn-slide-show-text1 {  
+  margin-left: 65px;
+}
+
+.App .btn-moving-gradient {  
+  height: 55px;  
+  width: 200px;  
+  font-size: 16px;  
+  font-weight: 600;  
+  color: rgb(255, 255, 255);  
+  cursor: pointer;  
+  border: medium;  
+  background-size: 300% 100%;  
+  border-radius: 50px;
+}
+
+.App .btn-moving-gradient:hover {  
+  transition: 0.5s ease-in-out;  
+  background-position: 100% 0px;
+}
+
+.App .btn-moving-gradient--blue {  
+  background-image: linear-gradient(90deg, rgb(61, 135, 255), rgb(190, 61, 255), rgb(126, 61, 255), rgb(58, 134, 255));  
+  box-shadow: rgb(190, 61, 255) 0px 4px 15px 0px;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+  height: 50px; /* Set a fixed height for the footer */
+  color: #fff;
 }

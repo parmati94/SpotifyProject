@@ -13,7 +13,7 @@ function App() {
   const fetchPlaylists = useCallback(async () => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/get_all_playlists`);
-  
+
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data.message)) {
@@ -25,9 +25,22 @@ function App() {
   }, []);
 
   useEffect(() => {
+    // Set the page title
+    document.title = 'SpotifyProject';
+  
+    // Set the favicon
+    let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+    link.type = 'image/x-icon';
+    link.rel = 'shortcut icon';
+    link.href = `${process.env.PUBLIC_URL}/favicon.ico`; // Use local favicon
+    document.getElementsByTagName('head')[0].appendChild(link);
+  }, []);
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const loginStatus = urlParams.get('login');
     if (loginStatus === 'success') {
+      console.log('Login succeeded');
       setIsLoggedIn(true);
       fetchPlaylists();
     }
@@ -38,7 +51,7 @@ function App() {
     }, 60 * 30 * 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [setIsLoggedIn, fetchPlaylists]);
+  }, [fetchPlaylists]);
 
   useEffect(() => {
     if (data) {
@@ -50,7 +63,7 @@ function App() {
     setShowCreatePlaylist(false)
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/${endpoint}`, { method });
-    
+
     if (response.ok) { // Check if the response status is 200
       var data = await response.json();
       setData(data.message);
@@ -60,7 +73,7 @@ function App() {
   };
 
   const handleLogin = () => {
-    const baseUrl = window._env_.REACT_APP_API_BASE_URL  || 'http://localhost:8000';
+    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     window.location.href = `${baseUrl}/login`;
   };
 
@@ -69,9 +82,12 @@ function App() {
     const options = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_playlist, target_playlist }) // Send data as JSON in the body
     };
-    const response = await fetch(`${baseUrl}/create_playlist?source_playlist=${encodeURIComponent(source_playlist)}&target_playlist=${encodeURIComponent(target_playlist)}`, options);
-    
+    const response = await fetch(`${baseUrl}/create_playlist`, options);
+
+    setData(""); // Reset the state
+  
     if (response.ok) {
       const data = await response.json();
       setData(data.message);
@@ -84,8 +100,8 @@ function App() {
     <div className="App">
       <div className="button-group">
         <div className="login-section">
-          <button onClick={handleLogin}>Login with Spotify</button>
-          {logoutMessage && 
+          <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={handleLogin}>Login with Spotify</button>
+          {logoutMessage &&
             <div className="logout-message">
               <p>{logoutMessage}</p>
             </div>
@@ -93,33 +109,34 @@ function App() {
         </div>
         {isLoggedIn && (
           <>
-            <button onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
-            <button onClick={() => handleClick('add_daily', 'PUT')}>Add Daily Playlist</button>
-            <button onClick={() => handleClick('add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
-            <button onClick={() => handleClick('delete_daily', 'PUT')}>Delete All Daily Playlists</button>
-            <button onClick={() => setShowCreatePlaylist(prevState => !prevState)}>Create Playlist</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => setShowCreatePlaylist(prevState => !prevState)}>Create Playlist</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_daily', 'PUT')}>Add Daily Playlist</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('delete_daily', 'PUT')}>Delete All Daily Playlists</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
             {showCreatePlaylist && (
               <div className="create-playlist">
                 <h2>Create a Playlist Based on an Existing One 😮</h2>
-                <select value={existingPlaylist} onChange={(e) => setExistingPlaylist(e.target.value)}>
+                <select className="playlist-select" value={existingPlaylist} onChange={(e) => setExistingPlaylist(e.target.value)}>
                   {playlists.map((playlist) => (
                     <option key={playlist} value={playlist}>
                       {playlist}
                     </option>
                   ))}
                 </select>
-                <input type="text" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
-                <button onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist)}>Submit</button>
+                <input type="text" className="playlist-input" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
+                <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist)}>Submit</button>
               </div>
             )}
           </>
         )}
       </div>
-      {!showCreatePlaylist && data && 
+      {!showCreatePlaylist && data &&
         <div className="data-display">
           {Array.isArray(data) ? data.map((item, index) => <p key={index}>{item}</p>) : <p>{data}</p>}
         </div>
       }
+      <div className="footer">created by parmati 😄</div>
     </div>
   );
 }

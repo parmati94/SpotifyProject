@@ -233,6 +233,7 @@ def delete_playlists(name, playlist_ids, sp):
         return message
     else:
         print(f"No playlists exist with name: {name}")
+        return f"No playlists exist with name: {name}"
 
 
 # Retrieves recommendations based on playlist songs

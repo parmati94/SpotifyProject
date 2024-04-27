@@ -45,7 +45,6 @@ def delete_all_daily_playlists(sp):
 # Driver function for menu option #4
 # Creates playlist of size 80 based off of another playlist
 def create_playlist_from_playlist(source_playlist_name, target_playlist_name, sp):
-    print_all_playlist_names(sp)
     source_playlist_name = get_source_playlist_name(source_playlist_name)
     playlist_exists, playlist_id = playlist_exists_with_id(source_playlist_name, sp)
     if playlist_exists:

@@ -12,7 +12,6 @@ def spotify_auth(sp_oauth=None):
                 "playlist-read-private playlist-read-collaborative user-top-read"
 
         dotenv_path = join(dirname(dirname(__file__)), '.env')
-        print(dotenv_path)
         load_dotenv(dotenv_path)
 
         SECRET = os.getenv('CLIENT_SECRET')
