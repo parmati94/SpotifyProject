@@ -14,6 +14,8 @@ or Start FastAPI & React:
 ```npm run setup```, then ```npm start```
 
 ## Docker
+> **NOTE:** I've configured the build pipeline to also push an image to a private Docker repository, which comes with pre-configured credentials. If you are interested in utilizing this, please feel free to reach out.
+
 Since a `.env` is required with your own Spotify Developer credentials for the time being, you'll need to build both images locally:
 ```bash
 docker build -t spotifyproject-frontend:latest -f ./client/Dockerfile ./client
