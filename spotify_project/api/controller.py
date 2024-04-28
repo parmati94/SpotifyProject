@@ -19,7 +19,7 @@ from ..main.config import *
 
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="sovhioadufhg")
+app.add_middleware(SessionMiddleware, secret_key="sovhioadufhg", https_only=False)
 logging.basicConfig(level=logging.INFO)
 #sp = spotify_auth()
 
@@ -37,7 +37,7 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[FRONTEND_URL],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,8 +50,7 @@ async def read_root():
     return {"Meow"}
 
 def get_spotify(request: Request) -> spotipy.Spotify:
-    #access_token = request.session.get("access_token")
-    global access_token
+    access_token = request.session.get("access_token")
     if access_token is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
     sp = spotify_auth(access_token)
@@ -70,7 +69,6 @@ def login(request: Request):
 
 @app.get("/callback")
 def callback(request: Request):
-    global access_token
     scope = "user-library-read user-read-recently-played user-read-playback-state playlist-modify-private " \
             "playlist-read-private playlist-read-collaborative user-top-read"
     sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
@@ -83,10 +81,8 @@ def callback(request: Request):
     if 'access_token' not in token_info:
         # Redirect back to frontend with login=failure
         return RedirectResponse(url=f'{FRONTEND_URL}/?login=failure')
-    # request.session["access_token"] = access_token
+    request.session["access_token"] = access_token
     logging.info(f"Access token stored in session: {access_token}")
-    # access_token2 = request.session.get("access_token")
-    # logging.info(f"Access token retrieved in callback: {access_token2}")
     return RedirectResponse(url=f'{FRONTEND_URL}/?login=success')  # Redirect to the home page or any other page
 
 @app.get("/get_all_playlists")

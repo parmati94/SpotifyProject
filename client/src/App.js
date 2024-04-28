@@ -29,7 +29,9 @@ function App() {
 
   const fetchPlaylists = useCallback(async () => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${baseUrl}/get_all_playlists`);
+    const response = await fetch(`${baseUrl}/get_all_playlists`, {
+      credentials: 'include',  // Include credentials in the request
+    });
 
     if (response.ok) {
       const data = await response.json();
@@ -87,7 +89,13 @@ function App() {
     setShowCreatePlaylist(false)
     setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${baseUrl}/${endpoint}`, { method });
+    const response = await fetch(`${baseUrl}/${endpoint}`, { 
+      method,
+      credentials: 'include',  // Include credentials in the request
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
 
     if (response.ok) { // Check if the response status is 200
       var data = await response.json();
@@ -120,6 +128,7 @@ function App() {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const options = {
       method: 'PUT',
+      credentials: 'include',  // Include credentials in the request
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source_playlist, target_playlist, num_songs }) // Send data as JSON in the body
     };
