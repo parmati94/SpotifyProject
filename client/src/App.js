@@ -80,10 +80,10 @@ function App() {
   }, [data]);
 
   useEffect(() => {
-  if (isLoading) {
-    setData(null);
-  }
-}, [isLoading]);
+    if (isLoading) {
+      setData(null);
+    }
+  }, [isLoading]);
 
   const handleClick = async (action, endpoint, method = 'GET') => {
     setShowCreatePlaylist(false)
@@ -105,6 +105,7 @@ function App() {
     } else {
       setIsLoading(false);
       setData("Error: The operation could not be completed.");
+      setLastAction(action + "_failed");
     }
   };
 
@@ -112,6 +113,11 @@ function App() {
     setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     window.location.href = `${baseUrl}/login`;
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setData(null);
   };
 
   const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
@@ -140,9 +146,11 @@ function App() {
       const data = await response.json();
       setIsLoading(false);
       setData(data.message);
+      setLastAction("create_playlist");
     } else {
       setIsLoading(false);
       setData("Error: The operation could not be completed.");
+      setLastAction("create_playlist_failed");
     }
     setShowCreatePlaylist(true);
   };
@@ -156,7 +164,11 @@ function App() {
     <div className="App">
       <div className="button-group">
         <div className="login-section">
-          <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={handleLogin}>Login with Spotify</button>
+          {!isLoggedIn ? (
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={handleLogin}>Login with Spotify</button>
+          ) : (
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={handleLogout}>Logout</button>
+          )}
           {logoutMessage &&
             <div className="logout-message">
               <p>{logoutMessage}</p>
@@ -165,11 +177,11 @@ function App() {
         </div>
         {isLoggedIn && (
           <>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('get_all_playlists', 'get_all_playlists')}>Get All Playlists</button>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => setShowCreatePlaylist(prevState => !prevState)}>Create Playlist</button>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_daily', 'add_daily', 'PUT')}>Add Daily Playlist</button>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_weekly', 'add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('delete_daily', 'delete_daily', 'PUT')}>Delete All Daily Playlists</button>
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('get_all_playlists', 'get_all_playlists')}>Get All Playlists</button>
             {showCreatePlaylist && (
               <div className="create-playlist">
                 <h2>Create a Playlist Based on an Existing One 😮</h2>

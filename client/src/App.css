@@ -22,7 +22,8 @@ body {
 .App .button-group {
   width: 100%;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 50px;
   margin-bottom: 20px;
 }
 
@@ -30,6 +31,17 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.App .button-group .logout-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 100px; /* Adjust as needed */
+  height: 30px; /* Adjust as needed */
+  padding: 5px; /* Adjust as needed */
+  font-size: 12px !important;
 }
 
 .App .button-group .login-section button,
