@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch, faPlus } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 
 function App() {
@@ -12,7 +14,18 @@ function App() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [logoutMessage, setLogoutMessage] = useState('');
   const [playlistError, setPlaylistError] = useState('');
-  const [songsError, setSongsError] = useState('');
+  const [songsError, setSongsError] = useState('');  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [lastAction, setLastAction] = useState('');
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+  };
 
   const fetchPlaylists = useCallback(async () => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -70,7 +83,7 @@ function App() {
   }
 }, [isLoading]);
 
-  const handleClick = async (endpoint, method = 'GET') => {
+  const handleClick = async (action, endpoint, method = 'GET') => {
     setShowCreatePlaylist(false)
     setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -80,6 +93,7 @@ function App() {
       var data = await response.json();
       setIsLoading(false);
       setData(data.message);
+      setLastAction(action);
     } else {
       setIsLoading(false);
       setData("Error: The operation could not be completed.");
@@ -124,6 +138,11 @@ function App() {
     setShowCreatePlaylist(true);
   };
 
+  const handleSelectPlaylist = (playlist) => {
+    setExistingPlaylist(playlist);
+    setShowCreatePlaylist(true);
+  };
+
   return (
     <div className="App">
       <div className="button-group">
@@ -138,10 +157,10 @@ function App() {
         {isLoggedIn && (
           <>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => setShowCreatePlaylist(prevState => !prevState)}>Create Playlist</button>
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_daily', 'PUT')}>Add Daily Playlist</button>
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('delete_daily', 'PUT')}>Delete All Daily Playlists</button>
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('get_all_playlists')}>Get All Playlists</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_daily', 'add_daily', 'PUT')}>Add Daily Playlist</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_weekly', 'add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('delete_daily', 'delete_daily', 'PUT')}>Delete All Daily Playlists</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('get_all_playlists', 'get_all_playlists')}>Get All Playlists</button>
             {showCreatePlaylist && (
               <div className="create-playlist">
                 <h2>Create a Playlist Based on an Existing One 😮</h2>
@@ -174,8 +193,30 @@ function App() {
           <div className="double-bounce2"></div>
         </div>)}
       {!showCreatePlaylist && data &&
-        <div className="data-display">
-          {Array.isArray(data) ? data.map((item, index) => <p key={index}>{item}</p>) : <p>{data}</p>}
+        <div className={`data-display ${Array.isArray(data) && data.length > 1 ? 'multiple-cards' : ''}`}>
+          {lastAction === 'get_all_playlists' && (
+            <>
+              <FontAwesomeIcon icon={faSearch} onClick={toggleSearch} className="search-icon" />
+              {isSearchOpen && (
+                <input
+                  type="text"
+                  placeholder="Search for playlist..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="search-input"
+                />
+              )}
+            </>
+          )}
+          {Array.isArray(data)
+            ? data.filter(item => item.toLowerCase().includes(searchTerm.toLowerCase())).map((item, index) => (
+              <div key={index} className="card">
+                <FontAwesomeIcon icon={faPlus} onClick={() => handleSelectPlaylist(item)} style={{ cursor: 'pointer' }} className="fa-plus" title="Create new playlist" />
+                <p>{item}</p>
+              </div>
+            ))
+            : <div className="card"><p>{data}</p></div>
+          }
         </div>
       }
       <div className="footer">created by parmati 😄</div>

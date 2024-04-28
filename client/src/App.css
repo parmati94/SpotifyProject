@@ -1,7 +1,8 @@
 /* App.css */
 
 body {
-  background-color: #000000; /* Set this to the same color as the .App container */
+  background-color: #000000;
+  /* Set this to the same color as the .App container */
   margin: 0;
   padding: 0;
 }
@@ -12,7 +13,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: calc(100vh - 50px); /* Subtract the height of the footer */
+  height: calc(100vh - 50px);
+  /* Subtract the height of the footer */
   gap: 20px;
   padding-top: 20px;
 }
@@ -57,7 +59,7 @@ body {
 .App .create-playlist h2 {
   color: #fff;
   margin-bottom: 20px;
-  font-family: "Roboto Slab", serif; /* Change the font family */
+  font-family: "Roboto Slab", serif;
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
@@ -77,16 +79,21 @@ body {
 .App .data-display {
   max-height: 600px;
   overflow-y: scroll;
-  width: 85%; 
-  margin: 20px auto; 
-  background: linear-gradient(to right, #c1aaff, #a460f1);
+  width: 85%;
+  margin: 20px auto;
+  background: linear-gradient(to right, #daa5f8, #b076f1);
   padding: 20px;
   border-radius: 20px;
   border: none;
+  position: relative;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
   transition: all 0.3s ease;
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: #888 transparent; /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+}
+
+.App .data-display.multiple-cards {
+  padding-top: 40px;
 }
 
 .App .data-display:hover {
@@ -101,86 +108,152 @@ body {
 
 /* Style the scrollbar handle */
 .App .data-display::-webkit-scrollbar-thumb {
-  background: #888; 
+  background: #888;
   border-radius: 5px;
 }
 
 /* Handle on hover */
 .App .data-display::-webkit-scrollbar-thumb:hover {
-  background: #555; 
+  background: #555;
 }
 
 /* Style the scrollbar for Firefox */
 .App .data-display:hover {
-  scrollbar-color: #555 transparent; /* Change the scrollbar color on hover in Firefox */
+  scrollbar-color: #555 transparent;
+  /* Change the scrollbar color on hover in Firefox */
 }
 
-.App .data-display p {
-  color: #000; /* Change the text color */
-  font-size: 16px; /* Change the font size */
-  line-height: 2; /* Change the line height */
-  font-family: "Roboto Slab", serif; /* Change the font family */
+.App .data-display .card {
+  position: relative;
+  border: 1.5px solid #000;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+}
+
+.App .data-display .card:hover {
+  transform: scale(1.00);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23); /* Add box-shadow on hover */
+}
+
+
+.App .data-display .card p {
+  color: #000;
+  font-size: 16px;
+  line-height: 2.5;
+  font-family: "Roboto Slab", serif;
   font-optical-sizing: auto;
   font-weight: 600;
   font-style: normal;
   text-align: center;
-  margin-bottom: 10px; /* Add some space below each paragraph */
-  padding: 5px; /* Add some padding around the text */
-  border-bottom: 1px solid #000000; /* Add a border below each paragraph */
-  background-color: #f9f9f900; /* Add a background color */
-  /* Add any other styles you want for the paragraph elements */
+  margin-bottom: 10px;
+  padding: 5px;
+  border-bottom: 1px solid #000000;
+  background-color: #f9f9f900;
+  flex-grow: 1;
+}
+
+.App .data-display .card .fa-plus {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.App .data-display div.item {
+  position: relative;
+  align-items: center;
+}
+
+.App .data-display div.item .fa-plus {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.data-display .search-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.data-display .search-input {
+  position: absolute;
+  top: 5px;
+  right: 40px;
+  width: 200px;
+  padding: 5px;
+  border: none;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  transition: width 0.3s ease-in-out;
+  font-family: "Roboto Slab", serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+  z-index: 1;
+}
+
+.data-display .search-input:focus {
+  width: 300px;
 }
 
 .App .data-display p:last-child {
-  border-bottom: none; /* Remove the border from the last paragraph */
+  border-bottom: none;
 }
 
 .playlist-select, .playlist-input {
-  color: #000000; /* Change the placeholder text color */
-  font-style: italic; /* Make the placeholder text italic */
-  font-family: "Roboto Slab", serif; /* Change the font family */
+  color: #000000;
+  font-style: italic;
+  font-family: "Roboto Slab", serif;
   font-optical-sizing: auto;
   font-weight: 700;
   font-style: normal;
 }
 
 .playlist-input::placeholder {
-  color: #8b8b8b; /* Change the placeholder text color */
-  font-style: italic; /* Make the placeholder text italic */
-  font-family: "Roboto Slab", serif; /* Change the font family */
+  color: #8b8b8b;
+  font-style: italic;
+  font-family: "Roboto Slab", serif;
   font-optical-sizing: auto;
   font-weight: 700;
   font-style: normal;
 }
 
-.App .btn {  
-  font-family: Arial, Helvetica, sans-serif;  
+.App .btn {
+  font-family: Arial, Helvetica, sans-serif;
   text-transform: uppercase;
 }
 
-.App .btn:hover .btn-slide-show-text1 {  
+.App .btn:hover .btn-slide-show-text1 {
   margin-left: 65px;
 }
 
-.App .btn-moving-gradient {  
-  height: 55px;  
-  width: 200px;  
-  font-size: 16px;  
-  font-weight: 600;  
-  color: rgb(255, 255, 255);  
-  cursor: pointer;  
-  border: medium;  
-  background-size: 300% 100%;  
+.App .btn-moving-gradient {
+  height: 55px;
+  width: 200px;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  border: medium;
+  background-size: 300% 100%;
   border-radius: 50px;
 }
 
-.App .btn-moving-gradient:hover {  
-  transition: 0.5s ease-in-out;  
+.App .btn-moving-gradient:hover {
+  transition: 0.5s ease-in-out;
   background-position: 100% 0px;
 }
 
-.App .btn-moving-gradient--blue {  
-  background-image: linear-gradient(90deg, rgb(61, 135, 255), rgb(190, 61, 255), rgb(126, 61, 255), rgb(58, 134, 255));  
+.App .btn-moving-gradient--blue {
+  background-image: linear-gradient(90deg, rgb(61, 135, 255), rgb(190, 61, 255), rgb(126, 61, 255), rgb(58, 134, 255));
   box-shadow: rgb(190, 61, 255) 0px 4px 15px 0px;
 }
 
@@ -191,16 +264,16 @@ body {
   width: 100%;
   text-align: center;
   padding: 10px 0;
-  height: 50px; /* Set a fixed height for the footer */
+  height: 50px;
   color: #fff;
 }
 
 .error {
   color: rgb(247, 46, 106);
-  padding: 0; /* Adjust as needed */
-  margin-bottom: 10px; /* Adjust as needed */
-  line-height: 1; /* Adjust as needed */
-  font-family: "Roboto Slab", serif; /* Change the font family */
+  padding: 0;
+  margin-bottom: 10px;
+  line-height: 1;
+  font-family: "Roboto Slab", serif;
   font-optical-sizing: auto;
   font-weight: 300;
   font-style: normal;
@@ -215,8 +288,12 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+      transform: rotate(0deg);
+  }
+  100% {
+      transform: rotate(360deg);
+  }
 }
 
 .double-bounce1, .double-bounce2 {
@@ -228,16 +305,20 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  
+
   animation: sk-bounce 2.0s infinite ease-in-out;
 }
 
 .double-bounce2 {
   animation-delay: -1.0s;
-  background-color: #20041f; 
+  background-color: #20041f;
 }
 
 @keyframes sk-bounce {
-  0%, 100% { transform: scale(0.0) }
-  50% { transform: scale(1.0) }
+  0%, 100% {
+      transform: scale(0.0)
+  }
+  50% {
+      transform: scale(1.0)
+  }
 }
