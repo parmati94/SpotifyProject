@@ -4,8 +4,10 @@
   "description": "The following dependencies are needed: <br />\r spotipy - ```pip3 install spotipy``` <br />\r dotenv - ```pip3 install python-dotenv```",
   "main": "index.js",
   "scripts": {
-    "setup": "npm install && cd client && npm install",
-    "start": "node ./client/set-env.js && concurrently \"npm --prefix client start\" \"uvicorn spotify_project.api.controller:app --reload\""
+    "setup": "pip install -r ./spotify_project/requirements.txt && npm install && cd client && npm install",
+    "start": "node ./client/set-env.js && concurrently \"npm --prefix client start\" \"uvicorn spotify_project.api.controller:app --reload\"",
+    "start-client": "npm --prefix client start",
+    "start-server": "uvicorn spotify_project.api.controller:app --reload"
   },
   "keywords": [],
   "author": "",

@@ -7,10 +7,8 @@ You will need to create a .env file which resides in the spotify_project directo
 If you intend to simply run this without docker, your REDIRECT_URI will be hard set to http://localhost:8000/callback. Make sure to add this to 'Redirect URIs' in your Spotify Developer Portal by going to Dashboard ---> Settings.
 
 ## Usage:
-Install dependencies:  
-```pip install -r requirements.txt```
 
-or Start FastAPI & React:  
+Start FastAPI & React:  
 ```npm run setup```, then ```npm start```
 
 ## Docker
