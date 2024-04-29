@@ -139,20 +139,17 @@ def get_playlist_data(playlist_id, sp, playlist_offset=0):
 
 # Returns all playlists for the current users
 def get_all_playlists(sp):
-    list_of_playlists = sp.current_user_playlists()
-    total_playlists = list_of_playlists['total']
-    list_of_playlist_items = list_of_playlists['items']
-    total_playlists -= 50
+    playlists = []
+    offset = 0
 
-    playlist_offset = 0
+    while True:
+        batch = sp.current_user_playlists(offset=offset) # Default spotify limit is 50
+        playlists.extend(batch['items'])
+        offset += len(batch['items'])
+        if offset >= batch['total']:
+            break
 
-    while total_playlists > 0:
-        playlist_offset += 50
-        list_of_playlists = sp.current_user_playlists(offset=playlist_offset)
-        total_playlists -= 50
-        list_of_playlist_items.extend(list_of_playlists['items'])
-
-    return list_of_playlist_items
+    return playlists
 
 
 # Takes playlist name and returns list of all playlist ID's that correspond to that name

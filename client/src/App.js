@@ -32,11 +32,13 @@ function App() {
     const response = await fetch(`${baseUrl}/get_all_playlists`, {
       credentials: 'include',  // Include credentials in the request
     });
-
+  
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data.message)) {
-        setPlaylists(data.message);
+        // Extract only the playlist names for now
+        const playlistNames = data.message.map(playlist => playlist.name);
+        setPlaylists(playlistNames);
       }
     } else {
       setData("Error: The operation could not be completed.");
@@ -118,6 +120,7 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setData(null);
+    setLogoutMessage('Successfully logged out.');
   };
 
   const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
@@ -163,17 +166,20 @@ function App() {
   return (
     <div className="App">
       <div className="button-group">
-        <div className="login-section">
-          {!isLoggedIn ? (
+        <div className={`login-section ${!isLoggedIn ? '' : 'hidden'}`}>
+          {!isLoggedIn && (
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={handleLogin}>Login with Spotify</button>
-          ) : (
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={handleLogout}>Logout</button>
           )}
           {logoutMessage &&
-            <div className="logout-message">
-              <p>{logoutMessage}</p>
-            </div>
-          }
+          <div className="logout-message">
+            <p>{logoutMessage}</p>
+          </div>
+        }
+        </div>
+        <div className={`logout-section ${isLoggedIn ? '' : 'hidden'}`}>
+          {isLoggedIn && (
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={handleLogout}>Logout</button>
+          )}
         </div>
         {isLoggedIn && (
           <>
@@ -182,37 +188,38 @@ function App() {
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_daily', 'add_daily', 'PUT')}>Add Daily Playlist</button>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('add_weekly', 'add_weekly', 'PUT')}>Add/Update Weekly Playlist</button>
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleClick('delete_daily', 'delete_daily', 'PUT')}>Delete All Daily Playlists</button>
-            {showCreatePlaylist && (
-              <div className="create-playlist">
-                <h2>Create a Playlist Based on an Existing One 😮</h2>
-                <select className="playlist-select" value={existingPlaylist} onChange={(e) => { setExistingPlaylist(e.target.value); setPlaylistError(''); }}>
-                  <option disabled value="">Select Existing Playlist</option>
-                  {playlists.map((playlist) => (
-                    <option key={playlist} value={playlist}>
-                      {playlist}
-                    </option>
-                  ))}
-                </select>
-                {playlistError && <div className="error">{playlistError}</div>}
-                <select className="playlist-input" value={numberOfSongs} onChange={(e) => { setNumberOfSongs(e.target.value); setSongsError(''); }}>
-                  <option disabled value="">Select Number of Songs</option>
-                  {Array.from({length: 10}, (_, i) => (i + 1) * 20).map((value) => 
-                    <option key={value} value={value}>{value} songs</option>
-                  )}
-                </select>
-                {songsError && <div className="error">{songsError}</div>}
-                <input type="text" className="playlist-input" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
-                <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist, numberOfSongs)}>Submit</button>
-              </div>
-            )}
           </>
         )}
       </div>
+      {isLoggedIn && showCreatePlaylist && (
+        <div className="create-playlist">
+          <h2>Create a Playlist Based on an Existing One 😮</h2>
+          <select className="playlist-select" value={existingPlaylist} onChange={(e) => { setExistingPlaylist(e.target.value); setPlaylistError(''); }}>
+            <option disabled value="">Select Existing Playlist</option>
+            {playlists.map((playlist) => (
+              <option key={playlist} value={playlist}>
+                {playlist}
+              </option>
+            ))}
+          </select>
+          {playlistError && <div className="error">{playlistError}</div>}
+          <select className="playlist-input" value={numberOfSongs} onChange={(e) => { setNumberOfSongs(e.target.value); setSongsError(''); }}>
+            <option disabled value="">Select Number of Songs</option>
+            {Array.from({length: 10}, (_, i) => (i + 1) * 20).map((value) => 
+              <option key={value} value={value}>{value} songs</option>
+            )}
+          </select>
+          {songsError && <div className="error">{songsError}</div>}
+          <input type="text" className="playlist-input" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Enter new playlist name" />
+          <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={() => handleCreatePlaylist(existingPlaylist, newPlaylist, numberOfSongs)}>Submit</button>
+        </div>
+      )}
       {!showCreatePlaylist && isLoading && (
         <div className="spinner">
           <div className="double-bounce1"></div>
           <div className="double-bounce2"></div>
-        </div>)}
+        </div>
+      )}
       {!showCreatePlaylist && data &&
         <div className={`data-display ${Array.isArray(data) && data.length > 1 ? 'multiple-cards' : ''}`}>
           {lastAction === 'get_all_playlists' && (
@@ -230,10 +237,10 @@ function App() {
             </>
           )}
           {Array.isArray(data)
-            ? data.filter(item => item.toLowerCase().includes(searchTerm.toLowerCase())).map((item, index) => (
+            ? data.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).map((item, index) => (
               <div key={index} className="card">
-                <FontAwesomeIcon icon={faPlus} onClick={() => handleSelectPlaylist(item)} style={{ cursor: 'pointer' }} className="fa-plus" title="Create new playlist" />
-                <p>{item}</p>
+                <FontAwesomeIcon icon={faPlus} onClick={() => handleSelectPlaylist(item.name)} style={{ cursor: 'pointer' }} className="fa-plus" title="Create new playlist" />
+                <p>{item.name}</p>
               </div>
             ))
             : <div className="card"><p>{data}</p></div>

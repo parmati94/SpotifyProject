@@ -90,7 +90,10 @@ async def all_playlists(request: Request, sp: spotipy.Spotify = Depends(get_spot
     playlists = get_all_playlists(sp)
     message = []
     for playlist in playlists:
-        message.append(playlist["name"])
+        message.append({
+            "name": playlist["name"],
+            "total_tracks": playlist["tracks"]["total"]
+        })
         
     return {"message": message}
 
