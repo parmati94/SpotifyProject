@@ -32,17 +32,30 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: auto;
+  height: auto;
 }
 
-.App .button-group .logout-button {
+.App .button-group .login-section.hidden {
+  display: none;
+}
+
+.App .button-group .logout-section {
   position: fixed;
   bottom: 40px;
   right: 20px;
   z-index: 1000;
-  width: 100px; /* Adjust as needed */
-  height: 30px; /* Adjust as needed */
-  padding: 5px; /* Adjust as needed */
+}
+
+.App .button-group .logout-section .logout-button {
+  width: 100px;
+  height: 30px;
+  padding: 5px;
   font-size: 12px !important;
+}
+
+.App .button-group .login-section.hidden {
+  display: none;
 }
 
 .App .button-group .login-section button,
@@ -56,7 +69,7 @@ body {
   cursor: pointer;
 }
 
-.App .button-group .login-section .logout-message {
+.App .button-group .logout-message {
   color: #fff;
   margin-top: 10px;
 }

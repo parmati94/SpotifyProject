@@ -166,17 +166,20 @@ function App() {
   return (
     <div className="App">
       <div className="button-group">
-        <div className="login-section">
-          {!isLoggedIn ? (
+        <div className={`login-section ${!isLoggedIn ? '' : 'hidden'}`}>
+          {!isLoggedIn && (
             <button className="btn btn-moving-gradient btn-moving-gradient--blue" onClick={handleLogin}>Login with Spotify</button>
-          ) : (
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={handleLogout}>Logout</button>
           )}
           {logoutMessage &&
-            <div className="logout-message">
-              <p>{logoutMessage}</p>
-            </div>
-          }
+          <div className="logout-message">
+            <p>{logoutMessage}</p>
+          </div>
+        }
+        </div>
+        <div className={`logout-section ${isLoggedIn ? '' : 'hidden'}`}>
+          {isLoggedIn && (
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={handleLogout}>Logout</button>
+          )}
         </div>
         {isLoggedIn && (
           <>
