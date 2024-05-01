@@ -26,9 +26,12 @@
 }
 
 #datalist {
-  text-align: right;
+  text-align: center;
   font-size: medium;
-  color: aqua;
+  padding: 0px 0px 10px ;
+  color: rgb(255, 255, 255);
+  list-style-type: none;
+
 }
 
  body {

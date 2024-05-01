@@ -55,15 +55,15 @@ function App() {
       </div>
 
       {data && (
-        <div className="center">
+        <div>
           {Array.isArray(data) ? (
             data.map((item, index) => (
-              <p key={index} style={{ lineHeight: "1" }}>
+              <li key={index} id="datalist" style={{ lineHeight: "1" }}>
                 {item}
-              </p>
+              </li>
             ))
           ) : (
-            <p id="datalist">{data}</p>
+            <ul>{data}</ul>
           )}
         </div>
       )}
