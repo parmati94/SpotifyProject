@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faPlus } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
 
+let inactivityTimeoutId;
+
 function App() {
   const [data, setData] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -20,18 +22,22 @@ function App() {
   const [lastAction, setLastAction] = useState('');
   const [activeCard, setActiveCard] = useState(null);
 
+  // Handles changes in the search input
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
+  // Toggles the visibility of the search form
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
   };
 
+  // Toggles the active card
   const toggleCard = (index) => {
     setActiveCard(activeCard === index ? null : index);
   };
 
+  // Fetches the list of playlists for playlist creation dropdown
   const fetchPlaylists = useCallback(async () => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/get_all_playlists`, {
@@ -50,11 +56,9 @@ function App() {
     }
   }, []);
 
+  // Sets the page title and favicon
   useEffect(() => {
-    // Set the page title
     document.title = 'SpotifyProject';
-  
-    // Set the favicon
     let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
     link.type = 'image/x-icon';
     link.rel = 'shortcut icon';
@@ -62,6 +66,30 @@ function App() {
     document.getElementsByTagName('head')[0].appendChild(link);
   }, []);
 
+  // Handles user inactivity
+  useEffect(() => {
+    if (isLoggedIn) {
+      const events = ['mousemove', 'keydown', 'wheel', 'DOMMouseScroll', 'mouseWheel', 'mousedown', 'touchstart', 'touchmove', 'MSPointerDown', 'MSPointerMove'];
+      const resetTimeout = () => {
+        clearTimeout(inactivityTimeoutId);
+        inactivityTimeoutId = setTimeout(() => {
+          handleLogout('You have been logged out due to inactivity. Please log back in.');
+        }, 60 * 15 * 1000);
+      };
+      for (let i in events) {
+        window.addEventListener(events[i], resetTimeout);
+      }
+      resetTimeout();
+      return () => {
+        for (let i in events) {
+          window.removeEventListener(events[i], resetTimeout);
+        }
+        clearTimeout(inactivityTimeoutId);
+      };
+    }
+  }, [isLoggedIn]);
+
+  // Checks the login status and fetches playlists if login was successful
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const loginStatus = urlParams.get('login');
@@ -71,27 +99,23 @@ function App() {
       setIsLoading(false); 
       fetchPlaylists();
     }
-    const timeoutId = setTimeout(() => {
-      setIsLoggedIn(false);
-      setData(null);
-      setLogoutMessage('You have been logged out. Please log back in.');
-    }, 60 * 30 * 1000);
-
-    return () => clearTimeout(timeoutId);
   }, [fetchPlaylists]);
 
+  // Hides the create playlist form when data is present
   useEffect(() => {
     if (data) {
       setShowCreatePlaylist(false);
     }
   }, [data]);
 
+  // Resets data when loading starts
   useEffect(() => {
     if (isLoading) {
       setData(null);
     }
   }, [isLoading]);
 
+  // Handles most click events and makes requests
   const handleClick = async (action, endpoint, method = 'GET') => {
     setShowCreatePlaylist(false)
     setIsLoading(true);
@@ -116,24 +140,27 @@ function App() {
     }
   };
 
+  // Handles user login
   const handleLogin = () => {
     setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     window.location.href = `${baseUrl}/login`;
   };
 
-  const handleLogout = async () => {
+  // Handles user logout
+  const handleLogout = async (logoutMessage = 'Successfully logged out.') => {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/logout`);
     if (response.ok) {
       setIsLoggedIn(false);
       setData(null);
-      setLogoutMessage('Successfully logged out.');
+      setLogoutMessage(logoutMessage);
     } else {
       setLogoutMessage('Logout failed.');
     }
   };
 
+  // Handles creating playlist from playlist feature
   const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
     if (!source_playlist) {
     setPlaylistError('Please select an existing playlist.');
@@ -169,6 +196,7 @@ function App() {
     setShowCreatePlaylist(true);
   };
 
+  // Handles using playlist from list as Create playlist input
   const handleSelectPlaylist = (playlist) => {
     setExistingPlaylist(playlist);
     setShowCreatePlaylist(true);
@@ -189,7 +217,7 @@ function App() {
         </div>
         <div className={`logout-section ${isLoggedIn ? '' : 'hidden'}`}>
           {isLoggedIn && (
-            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={handleLogout}>Logout</button>
+            <button className="btn btn-moving-gradient btn-moving-gradient--blue logout-button" onClick={() => handleLogout()}>Logout</button>
           )}
         </div>
         {isLoggedIn && (

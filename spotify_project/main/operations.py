@@ -1,7 +1,5 @@
 import os
 from datetime import datetime
-from .config import *
-from .input import *
 import random
 
 # sp = spotify_auth()
