@@ -7,15 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi import Depends
 from fastapi import HTTPException
+import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from starlette.middleware.sessions import SessionMiddleware
 from os.path import join, dirname
 from dotenv import load_dotenv
 sys.path.append("..")
 from .models import Playlist
-from ..main.helpers import *
+from ..main.operations import *
 from ..main.main import *
-from ..main.config import *
+from .auth import *
 
 DEFAULT_IMAGE_URL = 'https://i.imgur.com/lBzb2v2.png'
 
@@ -52,10 +53,14 @@ async def read_root():
     return {"Meow"}
 
 def get_spotify(request: Request) -> spotipy.Spotify:
-    access_token = request.session.get("access_token")
-    if access_token is None:
+    token_info = request.session.get("token_info")
+    if token_info is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    sp = spotify_auth(access_token)
+    new_token_info = spotify_auth(token_info)
+    if new_token_info != token_info:
+        print('Access token refreshed.')
+        request.session["token_info"] = new_token_info
+    sp = spotipy.Spotify(auth=new_token_info['access_token'])
     return sp
 
 @app.get("/login")
@@ -79,17 +84,16 @@ def callback(request: Request):
                             cache_path=join(dirname(__file__), '.cache'))
     code = request.query_params.get('code')
     token_info = sp_oauth.get_access_token(code)
-    access_token = token_info['access_token']
     if 'access_token' not in token_info:
         # Redirect back to frontend with login=failure
         return RedirectResponse(url=f'{FRONTEND_URL}/?login=failure')
-    request.session["access_token"] = access_token
-    logging.info(f"Access token stored in session: {access_token}")
+    request.session["token_info"] = token_info
+    logging.info(f"Token info stored in session: {token_info}")
     return RedirectResponse(url=f'{FRONTEND_URL}/?login=success')  # Redirect to the home page or any other page
 
 @app.get("/logout")
 def logout(request: Request):
-    request.session.pop("access_token", None)
+    request.session.pop("token_info", None)
     return {"message": "Logged out"}
 
 @app.get("/get_all_playlists")
