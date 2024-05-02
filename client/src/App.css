@@ -160,10 +160,12 @@ body {
   border-radius: 12px;
   perspective: 1000px;
   transition: transform .8s cubic-bezier(0.5, 1.5, 0.5, 1);
+  cursor: pointer;
 }
 
 .App .data-display .card.single-card {
   margin-bottom: 0px;
+  cursor: default;
 }
 
 .App .data-display .card p {
