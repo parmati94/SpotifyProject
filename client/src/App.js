@@ -18,6 +18,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [lastAction, setLastAction] = useState('');
+  const [activeCard, setActiveCard] = useState(null);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
@@ -25,6 +26,10 @@ function App() {
 
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
+  };
+
+  const toggleCard = (index) => {
+    setActiveCard(activeCard === index ? null : index);
   };
 
   const fetchPlaylists = useCallback(async () => {
@@ -117,10 +122,16 @@ function App() {
     window.location.href = `${baseUrl}/login`;
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setData(null);
-    setLogoutMessage('Successfully logged out.');
+  const handleLogout = async () => {
+    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+    const response = await fetch(`${baseUrl}/logout`);
+    if (response.ok) {
+      setIsLoggedIn(false);
+      setData(null);
+      setLogoutMessage('Successfully logged out.');
+    } else {
+      setLogoutMessage('Logout failed.');
+    }
   };
 
   const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
@@ -232,18 +243,29 @@ function App() {
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="search-input"
+                  autoFocus
                 />
               )}
             </>
           )}
-          {Array.isArray(data)
-            ? data.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).map((item, index) => (
-              <div key={index} className="card">
+          {Array.isArray(data) ? data.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).map((item, index) => (
+            <div key={index} className={`card ${activeCard === index ? 'active' : ''}`} onClick={() => toggleCard(index)}>
+              <div className="card-front">
                 <FontAwesomeIcon icon={faPlus} onClick={() => handleSelectPlaylist(item.name)} style={{ cursor: 'pointer' }} className="fa-plus" title="Create new playlist" />
+                {item.image_url ? <img src={item.image_url} alt={item.name} className="card-image" /> : <div className="card-image-placeholder"></div>}
                 <p>{item.name}</p>
               </div>
-            ))
-            : <div className="card"><p>{data}</p></div>
+              {activeCard === index && (
+                <div className="card-back">
+                  {item.image_url ? <img src={item.image_url} alt={item.name} className="card-image" /> : <div className="card-image-placeholder"></div>}
+                  <div className="card-text">
+                    <p>{item.total_tracks} tracks</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+            : <div className="card single-card"><p>{data}</p></div>
           }
         </div>
       }

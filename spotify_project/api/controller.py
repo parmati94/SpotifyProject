@@ -17,6 +17,8 @@ from ..main.helpers import *
 from ..main.main import *
 from ..main.config import *
 
+DEFAULT_IMAGE_URL = 'https://i.imgur.com/lBzb2v2.png'
+
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="sovhioadufhg", https_only=False)
@@ -85,15 +87,25 @@ def callback(request: Request):
     logging.info(f"Access token stored in session: {access_token}")
     return RedirectResponse(url=f'{FRONTEND_URL}/?login=success')  # Redirect to the home page or any other page
 
+@app.get("/logout")
+def logout(request: Request):
+    request.session.pop("access_token", None)
+    return {"message": "Logged out"}
+
 @app.get("/get_all_playlists")
 async def all_playlists(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):
     playlists = get_all_playlists(sp)
     message = []
     for playlist in playlists:
-        message.append({
-            "name": playlist["name"],
-            "total_tracks": playlist["tracks"]["total"]
-        })
+        try:
+            message.append({
+                "name": playlist["name"],
+                "total_tracks": playlist["tracks"]["total"],
+                "image_url": playlist["images"][0]["url"] if playlist["images"] else DEFAULT_IMAGE_URL
+            })
+        except Exception as e:
+            print(f"Exception occurred with playlist: {playlist}")
+            print(f"Exception: {e}")
         
     return {"message": message}
 
