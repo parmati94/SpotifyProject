@@ -184,27 +184,12 @@ def add_songs_to_playlist(play_id, tracks, sp):
 # Checks if playlist specified exists
 # If exists, retrieves recommended tracks (40) and adds to playlist
 # If does not exist, creates playlist with specified name and adds recommended tracks (40)
-def extend_playlist(target_playlist_name, target_playlist_id, sp, provide_options=False):  
+def extend_playlist(target_playlist_name, target_playlist_id, sp):  
 
-    if provide_options:
-        type_choice = playlist_type_options()
-        size_choice = playlist_size_options()
-    else:
-        type_choice = 1 # default value - gets recommendations based on top tracks
-        size_choice = 2 # default value - extends by 40 songs
+    size_choice = 2 # default value - extends by 40 songs
 
-    if type_choice == 2:
-        print_all_playlist_names()
-        source_playlist_name = get_source_playlist_name()
-        playlist_exists, source_playlist_id = playlist_exists_with_id(source_playlist_name, sp)
-        if playlist_exists:
-            tracks = get_recommendations_from_playlist(source_playlist_name, source_playlist_id, size_choice, sp)
-        else:
-            print("Playlist extension failed.  Source playlist does not exist.")
-            return False
-    else:
-        top_tracks = get_top_tracks(sp)
-        tracks = get_recommendation_tracks(top_tracks, size_choice, sp)
+    top_tracks = get_top_tracks(sp)
+    tracks = get_recommendation_tracks(top_tracks, size_choice, sp)
 
     if tracks:
         print(f"Adding songs to playlist: {target_playlist_name}")
