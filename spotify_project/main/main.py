@@ -24,7 +24,7 @@ def create_daily_recommendation_playlist(name, num_lists, sp):
 def weekly_extended_playlist(sp):
     playlist_exists, playlist_id = playlist_exists_with_id('Weekly Extended Playlist', sp)
     if playlist_exists:
-        extend_playlist('Weekly Extended Playlist', playlist_id, sp, provide_options=False)
+        extend_playlist('Weekly Extended Playlist', playlist_id, sp)
         return f'Weekly playlist has been extended.'
     else:
         print("Weekly Extended Playlist does not exist.  Creating playlist and adding songs...")
@@ -43,13 +43,11 @@ def delete_all_daily_playlists(sp):
 # Driver function for menu option #4
 # Creates playlist of size 80 based off of another playlist
 def create_playlist_from_playlist(source_playlist_name, target_playlist_name, num_songs, sp):
-    source_playlist_name = get_source_playlist_name(source_playlist_name)
     playlist_exists, playlist_id = playlist_exists_with_id(source_playlist_name, sp)
     if playlist_exists:
         num_lists = num_songs // 20
         success, result = get_recommendations_from_playlist(source_playlist_name, playlist_id, num_lists, sp)
         if success:
-            target_playlist_name = get_new_playlist_name(target_playlist_name)
             create_playlist(get_current_user(sp), target_playlist_name, result, sp)
             print(f"Playlist created: {target_playlist_name}")
             return f"Playlist created: {target_playlist_name}"
