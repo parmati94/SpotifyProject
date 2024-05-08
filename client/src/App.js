@@ -91,13 +91,24 @@ function App() {
 
   // Checks the login status and fetches playlists if login was successful
   useEffect(() => {
+    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const urlParams = new URLSearchParams(window.location.search);
     const loginStatus = urlParams.get('login');
     if (loginStatus === 'success') {
-      console.log('Login succeeded');
-      setIsLoggedIn(true);
-      setIsLoading(false); 
-      fetchPlaylists();
+      // Call check_session endpoint
+      fetch(`${baseUrl}/check_session`, {
+        credentials: 'include',  // Include credentials in the request
+      }).then(response => response.json()).then(data => {
+        if (data.status === 'success') {
+          console.log('Login succeeded');
+          setIsLoggedIn(true);
+          setIsLoading(false); 
+          fetchPlaylists();
+        } else {
+          handleLogout('Please log in.')
+          window.location.href = '/';
+        }
+      });
     }
   }, [fetchPlaylists]);
 
@@ -118,6 +129,11 @@ function App() {
   // Handles most click events and makes requests
   const handleClick = async (action, endpoint, method = 'GET') => {
     setShowCreatePlaylist(false)
+    if (action === 'delete_daily'){
+      if (!window.confirm("Are you sure you want to delete all daily playlists?")) {
+        return;
+      }
+    }
     setIsLoading(true);
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/${endpoint}`, { 

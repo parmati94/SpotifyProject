@@ -61,7 +61,7 @@ body {
 .App .button-group .login-section button,
 .App .button-group button {
   padding: 10px;
-  font-size: 16px;
+  font-size: 15px;
   background-color: #007BFF;
   color: #fff;
   border: none;
@@ -442,12 +442,7 @@ body {
     justify-content: center;
     align-items: center; /* Add this line */
   }
-
-  .App .button-group button {
-    font-size: 12px; /* Adjust as needed */
-    padding: 5px; /* Adjust as needed */
-    width: 100px; /* Adjust as needed */
-  }
+  
   .App .data-display {
     width: 95%;
   }
