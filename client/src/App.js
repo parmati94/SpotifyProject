@@ -38,23 +38,28 @@ function App() {
   };
 
   // Fetches the list of playlists for playlist creation dropdown
-  const fetchPlaylists = useCallback(async () => {
+const fetchPlaylists = useCallback(async () => {
+  try {
     const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
     const response = await fetch(`${baseUrl}/get_all_playlists`, {
       credentials: 'include',  // Include credentials in the request
     });
-  
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data.message)) {
-        // Extract only the playlist names for now
-        const playlistNames = data.message.map(playlist => playlist.name);
-        setPlaylists(playlistNames);
-      }
-    } else {
-      setData("Error: The operation could not be completed.");
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  }, []);
+
+    const data = await response.json();
+    if (Array.isArray(data.message)) {
+      // Extract only the playlist names for now
+      const playlistNames = data.message.map(playlist => playlist.name);
+      setPlaylists(playlistNames);
+    }
+  } catch (error) {
+    console.error('An error occurred:', error);
+    setData(`Error: The operation could not be completed. ${error.message}`);
+  }
+}, []);
 
   // Sets the page title and favicon
   useEffect(() => {
@@ -135,78 +140,113 @@ function App() {
       }
     }
     setIsLoading(true);
-    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${baseUrl}/${endpoint}`, { 
-      method,
-      credentials: 'include',  // Include credentials in the request
-      headers: {
-        'Content-Type': 'application/json'
+    try {
+      const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+      const response = await fetch(`${baseUrl}/${endpoint}`, { 
+        method,
+        credentials: 'include',  // Include credentials in the request
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      if (!response.ok) { // Check if the response status is not OK
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
-
-    if (response.ok) { // Check if the response status is 200
+  
       var data = await response.json();
       setIsLoading(false);
       setData(data.message);
       setLastAction(action);
-    } else {
+    } catch (error) {
       setIsLoading(false);
-      setData("Error: The operation could not be completed.");
+      console.error('An error occurred:', error);
+      setData(`Error: The operation could not be completed. ${error.message}`);
       setLastAction(action + "_failed");
     }
   };
 
   // Handles user login
-  const handleLogin = () => {
-    setIsLoading(true);
-    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    window.location.href = `${baseUrl}/login`;
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true);
+      const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+      const response = await fetch(`${baseUrl}/health_check`);
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      window.location.href = `${baseUrl}/login`;
+    } catch (error) {
+      console.error('An error occurred:', error);
+      setIsLoading(false);
+      setLogoutMessage(`Login failed. ${error.message}`);
+    }
   };
-
+  
   // Handles user logout
   const handleLogout = async (logoutMessage = 'Successfully logged out.') => {
-    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const response = await fetch(`${baseUrl}/logout`);
-    if (response.ok) {
+    try {
+      setIsLoading(true);
+      const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+      const healthCheckResponse = await fetch(`${baseUrl}/health_check`); // Replace '/health-check' with an appropriate endpoint if needed
+  
+      if (!healthCheckResponse.ok) {
+        throw new Error(`HTTP error! status: ${healthCheckResponse.status}`);
+      }
+  
+      const logoutResponse = await fetch(`${baseUrl}/logout`);
+  
+      if (!logoutResponse.ok) {
+        throw new Error(`HTTP error! status: ${logoutResponse.status}`);
+      }
+      setIsLoading(false)
       setIsLoggedIn(false);
       setData(null);
       setLogoutMessage(logoutMessage);
-    } else {
-      setLogoutMessage('Logout failed.');
+    } catch (error) {
+      setIsLoading(false)
+      console.error('An error occurred:', error);
+      setData(`Logout failed. ${error.message}`);
     }
   };
 
   // Handles creating playlist from playlist feature
   const handleCreatePlaylist = async (source_playlist, target_playlist, num_songs) => {
     if (!source_playlist) {
-    setPlaylistError('Please select an existing playlist.');
-    return;
-  }
+      setPlaylistError('Please select an existing playlist.');
+      return;
+    }
     if (!num_songs) {
       setSongsError('Please select the number of songs.');
       return;
     }
     setIsLoading(true);
     setShowCreatePlaylist(false);
-    const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const options = {
-      method: 'PUT',
-      credentials: 'include',  // Include credentials in the request
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source_playlist, target_playlist, num_songs }) // Send data as JSON in the body
-    };
-    const response = await fetch(`${baseUrl}/create_playlist`, options);
-
-    setData(""); // Reset the state
+    try {
+      const baseUrl = window._env_.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+      const options = {
+        method: 'PUT',
+        credentials: 'include',  // Include credentials in the request
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_playlist, target_playlist, num_songs }) // Send data as JSON in the body
+      };
+      const response = await fetch(`${baseUrl}/create_playlist`, options);
   
-    if (response.ok) {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      setData(""); // Reset the state
       const data = await response.json();
       setIsLoading(false);
       setData(data.message);
       setLastAction("create_playlist");
-    } else {
+    } catch (error) {
       setIsLoading(false);
-      setData("Error: The operation could not be completed.");
+      console.error('An error occurred:', error);
+      setData(`Error: The operation could not be completed. ${error.message}`);
       setLastAction("create_playlist_failed");
     }
     setShowCreatePlaylist(true);

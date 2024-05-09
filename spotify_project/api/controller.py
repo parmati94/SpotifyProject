@@ -58,6 +58,11 @@ async def read_root():
     print('SP: {sp}')
     return {"Meow"}
 
+@app.get("/health_check")
+async def health_check():
+    print('Health check success.')
+    return {"PING!"}
+
 def get_spotify(request: Request) -> spotipy.Spotify:
     user_id = request.session.get("user_id")  # Get the user ID from the session
     if user_id is None:
@@ -127,6 +132,7 @@ def check_session(request: Request):
 @app.get("/logout")
 def logout(request: Request):
     request.session.pop("token_info", None)
+    request.session.pop("user_id", None)
     return {"message": "Logged out"}
 
 @app.get("/get_all_playlists")
