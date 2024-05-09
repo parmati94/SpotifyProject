@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+from os.path import join, dirname, exists
 from typing import Union
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,11 +21,17 @@ from .auth import *
 
 DEFAULT_IMAGE_URL = 'https://i.imgur.com/lBzb2v2.png'
 
+class NoOpCacheHandler(spotipy.cache_handler.CacheHandler):
+    def get_cached_token(self):
+        return None
+
+    def save_token_to_cache(self, token_info):
+        pass
+
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="sovhioadufhg", https_only=False)
 logging.basicConfig(level=logging.INFO)
-#sp = spotify_auth()
 
 dotenv_path = join(dirname(dirname(__file__)), '.env')
 load_dotenv(dotenv_path, override=True)
@@ -52,10 +59,13 @@ async def read_root():
     return {"Meow"}
 
 def get_spotify(request: Request) -> spotipy.Spotify:
+    user_id = request.session.get("user_id")  # Get the user ID from the session
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     token_info = request.session.get("token_info")
     if token_info is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    new_token_info = spotify_auth(token_info)
+    new_token_info = spotify_auth(token_info, user_id)
     if new_token_info != token_info:
         print('Access token refreshed.')
         request.session["token_info"] = new_token_info
@@ -68,8 +78,7 @@ def login(request: Request):
                 "playlist-read-private playlist-read-collaborative user-top-read"
     sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
                             client_secret=SECRET,
-                            redirect_uri=REDIRECT_URI,
-                            cache_path=join(dirname(__file__), '.cache'))
+                            redirect_uri=REDIRECT_URI)
     auth_url = sp_oauth.get_authorize_url()
     return RedirectResponse(auth_url)
 
@@ -80,7 +89,7 @@ def callback(request: Request):
     sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
                             client_secret=SECRET,
                             redirect_uri=REDIRECT_URI,
-                            cache_path=join(dirname(__file__), '.cache'))
+                            cache_handler=NoOpCacheHandler())
     code = request.query_params.get('code')
     token_info = sp_oauth.get_access_token(code)
     if 'access_token' not in token_info:
@@ -88,7 +97,32 @@ def callback(request: Request):
         return RedirectResponse(url=f'{FRONTEND_URL}/?login=failure')
     request.session["token_info"] = token_info
     logging.info(f"Token info stored in session: {token_info}")
+    
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    user_id = sp.current_user()['id']
+    request.session["user_id"] = user_id
+    
+    cache_dir = join(dirname(__file__), 'cache')
+    if not exists(cache_dir):
+        os.makedirs(cache_dir)
+    
+    cache_path = join(dirname(__file__), 'cache', f'.cache-{user_id}')
+        
+    sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
+                            client_secret=SECRET,
+                            redirect_uri=REDIRECT_URI,
+                            cache_path=cache_path)
+    sp_oauth._save_token_info(token_info)
+    
     return RedirectResponse(url=f'{FRONTEND_URL}/?login=success')  # Redirect to the home page or any other page
+
+@app.get("/check_session")
+def check_session(request: Request):
+    token_info = request.session.get("token_info")
+    if token_info is None:
+        return {"status": "error", "detail": "Not authenticated"}
+    else:
+        return {"status": "success", "user": "Authenticated"}
 
 @app.get("/logout")
 def logout(request: Request):
