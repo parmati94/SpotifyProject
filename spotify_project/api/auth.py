@@ -1,6 +1,6 @@
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
-from os.path import join, dirname
+from os.path import join, dirname, exists
 import os
 
 def spotify_auth(token_info, user_id):
@@ -14,7 +14,11 @@ def spotify_auth(token_info, user_id):
     ID = os.getenv('CLIENT_ID')
     REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://localhost:8000/callback')
     
-    cache_path = join(dirname(__file__), 'cache', f'.cache-{user_id}')
+    cache_dir = join(dirname(__file__), 'cache')
+    if not exists(cache_dir):
+        os.makedirs(cache_dir)
+    
+    cache_path = join(cache_dir, f'.cache-{user_id}')
 
     sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
                             client_secret=SECRET,

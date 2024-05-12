@@ -33,7 +33,7 @@ jobs:
         push: true
         tags: parmati/spotifyproject-api:latest
         
-    - name: Build and push private API Docker image
+    - name: Build and push Docker image for spotifyproject-api-private
       uses: docker/build-push-action@v2
       with:
         context: ./spotify_project
