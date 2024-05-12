@@ -3,7 +3,7 @@ import sys
 import logging
 from os.path import join, dirname, exists
 from typing import Union
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi import Depends
@@ -111,7 +111,7 @@ def callback(request: Request):
     if not exists(cache_dir):
         os.makedirs(cache_dir)
     
-    cache_path = join(dirname(__file__), 'cache', f'.cache-{user_id}')
+    cache_path = join(cache_dir, f'.cache-{user_id}')
         
     sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
                             client_secret=SECRET,
@@ -131,9 +131,9 @@ def check_session(request: Request):
 
 @app.get("/logout")
 def logout(request: Request):
-    request.session.pop("token_info", None)
-    request.session.pop("user_id", None)
-    return {"message": "Logged out"}
+    request.session.clear()
+    response = Response(content='{"message": "Logged out"}', media_type='application/json')
+    return response
 
 @app.get("/get_all_playlists")
 async def all_playlists(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):

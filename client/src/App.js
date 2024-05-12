@@ -111,7 +111,6 @@ const fetchPlaylists = useCallback(async () => {
           fetchPlaylists();
         } else {
           handleLogout('Please log in.')
-          window.location.href = '/';
         }
       });
     }
@@ -196,7 +195,7 @@ const fetchPlaylists = useCallback(async () => {
         throw new Error(`HTTP error! status: ${healthCheckResponse.status}`);
       }
   
-      const logoutResponse = await fetch(`${baseUrl}/logout`);
+      const logoutResponse = await fetch(`${baseUrl}/logout`, {credentials: 'include'});
   
       if (!logoutResponse.ok) {
         throw new Error(`HTTP error! status: ${logoutResponse.status}`);
@@ -204,6 +203,7 @@ const fetchPlaylists = useCallback(async () => {
       setIsLoading(false)
       setIsLoggedIn(false);
       setData(null);
+      // window.location.href = '/';
       setLogoutMessage(logoutMessage);
     } catch (error) {
       setIsLoading(false)
