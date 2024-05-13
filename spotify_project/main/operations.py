@@ -1,8 +1,7 @@
 import os
 from datetime import datetime
 import random
-
-# sp = spotify_auth()
+from ..logging_config import logger
 
 # Determines date and returns in specific format (Month-Day-Year)
 def get_date():
@@ -22,7 +21,7 @@ def get_current_user(sp):
 def re_auth():
     if os.path.exists(".cache"):
             os.remove(".cache")
-            print("Successfully removed login credentials.  You will need to re-authenticate.")
+            logger.info("Successfully removed login credentials.  You will need to re-authenticate.")
     
 
 # Print playlist names returned from get_all_playlists
@@ -30,7 +29,7 @@ def print_all_playlist_names(sp):
     playlists = get_all_playlists(sp)
     list_num = 1
     for playlist in playlists:
-        print(f"{list_num}. {playlist['name']}")
+        logger.info(f"{list_num}. {playlist['name']}")
         list_num += 1
      
         
@@ -49,17 +48,23 @@ def playlist_exists_with_id(playlist_name, sp):
 
 # retrieves user's top tracks in the short-term, size will always = 20
 def get_top_tracks(sp):
-    print('Getting top tracks...')
-    top_tracks = sp.current_user_top_tracks(time_range='short_term', limit=20, offset=0)
+    time_ranges = ['short_term', 'medium_term', 'long_term']
+
+    for time_range in time_ranges:
+        logger.info(f'Getting top tracks for {time_range}...')
+        top_tracks = sp.current_user_top_tracks(time_range=time_range, limit=20, offset=0)
+        if len(top_tracks['items']) >= 20:
+            return top_tracks
+
+    if len(top_tracks['items']) < 20:
+        raise ValueError('Error: Less than 20 top tracks returned.')
+
     return top_tracks
 
 
 # Looks at passed list of tracks and creates track_list with only track ID's
 def create_track_list(tracks):
     track_list = []
-
-    # print(playlist_data['items'][0]['track']['id'])
-    # recommended_tracks = get_recommendation_tracks(playlist_data['items'], 4)
 
     if 'items' in tracks:  # Used when parsing tracks derived from certain API returns
         for idx, item in enumerate(tracks['items']):
@@ -86,7 +91,7 @@ def track_split(track_list, num):
     i, j = 0, 0
     q = 0
 
-    print('Splitting top tracks...')
+    logger.info('Splitting top tracks...')
     while i < num:
         if j < 5:
             split_tracks[i][j] = track_list[q]
@@ -103,9 +108,9 @@ def track_split(track_list, num):
 # num var is determined by size of 2d list (number of lists in the list - each list will always be 5 long)
 def get_recommendations(split_tracks, num, sp):
     recommendations = []
-    print('Seeding recommendations...')
+    logger.info('Seeding recommendations...')
     for x in range(num):
-        # print(f"Split tracks: {split_tracks[x]}")
+        # logger.info(f"Split tracks: {split_tracks[x]}")
         temp_rec = sp.recommendations(seed_artists=None, seed_genres=None, seed_tracks=split_tracks[x], country=None,
                                       limit=20)
         temp_rec_id = []
@@ -122,7 +127,7 @@ def get_recommendations(split_tracks, num, sp):
 # Creates playlist and populates with passed song list ('recommendations')
 # Currently defaults playlist to private
 def create_playlist(user, name, recommendations, sp):
-    print('Creating playlist...')
+    logger.info('Creating playlist...')
     playlist = sp.user_playlist_create(user, name, public=False, collaborative=False, description="")
     playlist_id = playlist['id']
     for i in range(0, len(recommendations), 100):
@@ -189,13 +194,14 @@ def extend_playlist(target_playlist_name, target_playlist_id, sp):
     size_choice = 2 # default value - extends by 40 songs
 
     top_tracks = get_top_tracks(sp)
+  
     tracks = get_recommendation_tracks(top_tracks, size_choice, sp)
 
     if tracks:
-        print(f"Adding songs to playlist: {target_playlist_name}")
+        logger.info(f"Adding songs to playlist: {target_playlist_name}")
         success = add_songs_to_playlist(target_playlist_id, tracks, sp)
         if success:
-            print(f"Songs added successfully to playlist: {target_playlist_name}")
+            logger.info(f"Songs added successfully to playlist: {target_playlist_name}")
             return True
 
         else:
@@ -211,10 +217,10 @@ def delete_playlists(name, playlist_ids, sp):
             sp.current_user_unfollow_playlist(playlist_id)
             count += 1
         message = f"Deleted {count} playlist(s) with name: {name}"
-        print(message)
+        logger.info(message)
         return message
     else:
-        print(f"No playlists exist with name: {name}")
+        logger.error(f"No playlists exist with name: {name}")
         return f"No playlists exist with name: {name}"
 
 
@@ -222,7 +228,7 @@ def delete_playlists(name, playlist_ids, sp):
 def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists, sp):
     playlist_data = get_playlist_data(playlist_id, sp)
     total_tracks = playlist_data['total']
-    print(f"Total # of tracks: {total_tracks}")
+    logger.info(f"Total # of tracks: {total_tracks}")
     
     if total_tracks < 20:
         return False, f"Playlist contains only {total_tracks} tracks. At least 20 tracks are required."
@@ -231,7 +237,7 @@ def get_recommendations_from_playlist(playlist_name, playlist_id, num_lists, sp)
         return False, f"Playlist has {total_tracks} songs - max number of songs in new playlist is {max_songs}."
     else:
         playlist_offset = total_tracks - (num_lists * 5)
-        print(f'Playlist offset: {playlist_offset}')
+        logger.info(f'Playlist offset: {playlist_offset}')
         playlist_data = get_playlist_data(playlist_id, sp, playlist_offset)
         recommended_tracks = get_recommendation_tracks(playlist_data['items'], num_lists, sp)
 
