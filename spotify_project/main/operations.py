@@ -49,8 +49,17 @@ def playlist_exists_with_id(playlist_name, sp):
 
 # retrieves user's top tracks in the short-term, size will always = 20
 def get_top_tracks(sp):
-    print('Getting top tracks...')
-    top_tracks = sp.current_user_top_tracks(time_range='short_term', limit=20, offset=0)
+    time_ranges = ['short_term', 'medium_term', 'long_term']
+
+    for time_range in time_ranges:
+        print(f'Getting top tracks for {time_range}...')
+        top_tracks = sp.current_user_top_tracks(time_range=time_range, limit=20, offset=0)
+        if len(top_tracks['items']) >= 20:
+            return top_tracks
+
+    if len(top_tracks['items']) < 20:
+        raise ValueError('Error: Less than 20 top tracks returned.')
+
     return top_tracks
 
 
@@ -189,6 +198,7 @@ def extend_playlist(target_playlist_name, target_playlist_id, sp):
     size_choice = 2 # default value - extends by 40 songs
 
     top_tracks = get_top_tracks(sp)
+  
     tracks = get_recommendation_tracks(top_tracks, size_choice, sp)
 
     if tracks:

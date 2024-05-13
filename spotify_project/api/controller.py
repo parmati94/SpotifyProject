@@ -159,13 +159,19 @@ async def validate_playlist(playlist_name):
 
 @app.put("/add_daily")
 async def daily_rec(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):
-    date = get_date()
-    name = create_daily_recommendation_playlist(date, 4, sp)
+    try:
+        date = get_date()
+        name = create_recommendation_playlist(date, 4, sp)
+    except ValueError as e:
+        return {"message": str(e)}
     return {"message": name}
 
 @app.put("/add_weekly")
 async def weekly_rec(request: Request, sp: spotipy.Spotify = Depends(get_spotify)):
-    name = weekly_extended_playlist(sp)
+    try:
+        name = weekly_extended_playlist(sp)
+    except ValueError as e:
+        return {"message": str(e)}
     return {"message": name}
 
 @app.put("/delete_daily")

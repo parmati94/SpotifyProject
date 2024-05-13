@@ -4,7 +4,7 @@ from .operations import *
 
 # Driver function for menu option #1
 # Creates standard recommendation playlist based on a user's top tracks
-def create_daily_recommendation_playlist(name, num_lists, sp):
+def create_recommendation_playlist(name, num_lists, sp):
     top_tracks = get_top_tracks(sp) 
 
     recommendations = get_recommendation_tracks(top_tracks, num_lists, sp)
@@ -24,11 +24,14 @@ def create_daily_recommendation_playlist(name, num_lists, sp):
 def weekly_extended_playlist(sp):
     playlist_exists, playlist_id = playlist_exists_with_id('Weekly Extended Playlist', sp)
     if playlist_exists:
-        extend_playlist('Weekly Extended Playlist', playlist_id, sp)
-        return f'Weekly playlist has been extended.'
+        success = extend_playlist('Weekly Extended Playlist', playlist_id, sp)
+        if success:
+            return f'Weekly playlist has been extended.'
+        else:
+            return f'Error: Failed to extend the weekly playlist.'
     else:
         print("Weekly Extended Playlist does not exist.  Creating playlist and adding songs...")
-        create_daily_recommendation_playlist('Weekly Extended Playlist', 2, sp)
+        create_recommendation_playlist('Weekly Extended Playlist', 2, sp)
         return f'Daily playlist created with name: Weekly Extended Playlist'
         
         
