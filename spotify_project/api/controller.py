@@ -1,6 +1,6 @@
 import os
 import sys
-import logging
+from ..logging_config import logger
 from os.path import join, dirname, exists
 from typing import Union
 from fastapi import FastAPI, Request, Response
@@ -31,7 +31,6 @@ class NoOpCacheHandler(spotipy.cache_handler.CacheHandler):
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="sovhioadufhg", https_only=False)
-logging.basicConfig(level=logging.INFO)
 
 dotenv_path = join(dirname(dirname(__file__)), '.env')
 load_dotenv(dotenv_path, override=True)
@@ -55,12 +54,12 @@ app.add_middleware(
 
 @app.get("/")
 async def read_root():
-    print('SP: {sp}')
+    logger.info('SP: {sp}')
     return {"Meow"}
 
 @app.get("/health_check")
 async def health_check():
-    print('Health check success.')
+    logger.info('Health check success.')
     return {"PING!"}
 
 def get_spotify(request: Request) -> spotipy.Spotify:
@@ -72,7 +71,7 @@ def get_spotify(request: Request) -> spotipy.Spotify:
         raise HTTPException(status_code=401, detail="Not authenticated")
     new_token_info = spotify_auth(token_info, user_id)
     if new_token_info != token_info:
-        print('Access token refreshed.')
+        logger.info('Access token refreshed.')
         request.session["token_info"] = new_token_info
     sp = spotipy.Spotify(auth=new_token_info['access_token'])
     return sp
@@ -101,7 +100,7 @@ def callback(request: Request):
         # Redirect back to frontend with login=failure
         return RedirectResponse(url=f'{FRONTEND_URL}/?login=failure')
     request.session["token_info"] = token_info
-    logging.info(f"Token info stored in session: {token_info}")
+    logger.info(f"Token info stored in session: {token_info}")
     
     sp = spotipy.Spotify(auth=token_info['access_token'])
     user_id = sp.current_user()['id']
@@ -147,8 +146,8 @@ async def all_playlists(request: Request, sp: spotipy.Spotify = Depends(get_spot
                 "image_url": playlist["images"][0]["url"] if playlist["images"] else DEFAULT_IMAGE_URL
             })
         except Exception as e:
-            print(f"Exception occurred with playlist: {playlist}")
-            print(f"Exception: {e}")
+            logger.error(f"Exception occurred with playlist: {playlist}")
+            logger.error(f"Exception: {e}")
         
     return {"message": message}
 
