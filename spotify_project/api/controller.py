@@ -1,7 +1,11 @@
+from os.path import join, dirname, exists
+from dotenv import load_dotenv
+dotenv_path = join(dirname(dirname(dirname(__file__))), '.env')
+load_dotenv(dotenv_path, override=True)
+
 import os
 import sys
 from ..logging_config import logger
-from os.path import join, dirname, exists
 from typing import Union
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,12 +16,14 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from starlette.middleware.sessions import SessionMiddleware
 from os.path import join, dirname
-from dotenv import load_dotenv
 sys.path.append("..")
 from .models import Playlist
 from ..main.operations import *
 from ..main.main import *
 from .auth import *
+
+SCOPE = "user-library-read user-read-recently-played user-read-playback-state playlist-modify-private " \
+        "playlist-read-private playlist-read-collaborative user-top-read"
 
 DEFAULT_IMAGE_URL = 'https://i.imgur.com/lBzb2v2.png'
 
@@ -31,9 +37,6 @@ class NoOpCacheHandler(spotipy.cache_handler.CacheHandler):
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="sovhioadufhg", https_only=False)
-
-dotenv_path = join(dirname(dirname(__file__)), '.env')
-load_dotenv(dotenv_path, override=True)
 
 SECRET = os.getenv('CLIENT_SECRET')
 ID = os.getenv('CLIENT_ID')
@@ -78,9 +81,7 @@ def get_spotify(request: Request) -> spotipy.Spotify:
 
 @app.get("/login")
 def login(request: Request):
-    scope = "user-library-read user-read-recently-played user-read-playback-state playlist-modify-private " \
-                "playlist-read-private playlist-read-collaborative user-top-read"
-    sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
+    sp_oauth = SpotifyOAuth(scope=SCOPE, client_id=ID,
                             client_secret=SECRET,
                             redirect_uri=REDIRECT_URI)
     auth_url = sp_oauth.get_authorize_url()
@@ -88,9 +89,7 @@ def login(request: Request):
 
 @app.get("/callback")
 def callback(request: Request):
-    scope = "user-library-read user-read-recently-played user-read-playback-state playlist-modify-private " \
-            "playlist-read-private playlist-read-collaborative user-top-read"
-    sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
+    sp_oauth = SpotifyOAuth(scope=SCOPE, client_id=ID,
                             client_secret=SECRET,
                             redirect_uri=REDIRECT_URI,
                             cache_handler=NoOpCacheHandler())
@@ -112,7 +111,7 @@ def callback(request: Request):
     
     cache_path = join(cache_dir, f'.cache-{user_id}')
         
-    sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
+    sp_oauth = SpotifyOAuth(scope=SCOPE, client_id=ID,
                             client_secret=SECRET,
                             redirect_uri=REDIRECT_URI,
                             cache_path=cache_path)

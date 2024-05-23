@@ -43,6 +43,8 @@ console_handler.setFormatter(formatter)
 logger = logging.getLogger()
 logger.setLevel(numeric_level)
 
+print(f"Log level set to: {logging.getLevelName(logger.level)}")
+
 # Add both handlers to the root logger
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
