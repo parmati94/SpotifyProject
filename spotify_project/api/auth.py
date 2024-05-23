@@ -1,14 +1,10 @@
 from spotipy.oauth2 import SpotifyOAuth
-from dotenv import load_dotenv
 from os.path import join, dirname, exists
 import os
 
 def spotify_auth(token_info, user_id):
     scope = "user-library-read user-read-recently-played user-read-playback-state playlist-modify-private " \
             "playlist-read-private playlist-read-collaborative user-top-read"
-
-    dotenv_path = join(dirname(dirname(__file__)), '.env')
-    load_dotenv(dotenv_path)
 
     SECRET = os.getenv('CLIENT_SECRET')
     ID = os.getenv('CLIENT_ID')
