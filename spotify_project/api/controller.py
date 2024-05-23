@@ -111,7 +111,7 @@ def callback(request: Request):
     
     cache_path = join(cache_dir, f'.cache-{user_id}')
         
-    sp_oauth = SpotifyOAuth(scope=scope, client_id=ID,
+    sp_oauth = SpotifyOAuth(scope=SCOPE, client_id=ID,
                             client_secret=SECRET,
                             redirect_uri=REDIRECT_URI,
                             cache_path=cache_path)
