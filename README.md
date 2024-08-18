@@ -42,7 +42,7 @@ This project currently supports the following features:
 
 - **Playlist Creation:** 
   - Generate an 80-song playlist based on your top songs from the last month.
-  - Create an 80-song playlist based on an existing playlist.
+  - Create a playlist based on an existing playlist.
 
 - **Playlist Extension:** 
   - Extend a 'weekly playlist' with recommendations based on your top songs. If it doesn't exist, the app will create one and populate it with recommended songs.

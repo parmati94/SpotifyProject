@@ -8,6 +8,7 @@ services:
       - api
     environment:
       - REACT_APP_API_BASE_URL=http://${API_HOST}:${API_PORT}
+    restart: always
   api:
     image: spotifyproject-api:latest
     ports:
@@ -15,3 +16,7 @@ services:
     environment:
       - REDIRECT_URI=http://${API_HOST}:${API_PORT}/callback
       - FRONTEND_URL=http://${FRONTEND_HOST}:${FRONTEND_PORT}
+      - LOG_LEVEL=info
+    volumes:
+    - /path/to/logs:/app/spotify_project/logs
+    restart: always
