@@ -84,22 +84,22 @@ def create_track_list(tracks):
 # Number of lists in split_tracks can currently be either 2 (5 + 5 = 10 total seeds) or 4 (5 + 5 + 5 +5 = 20 total seeds)
 # Each recommendation return limit = 20. with 5 seeds for each.
 # Number of lists = 2 = 40 tracks, Number of lists = 4 = 80 returned tracks
-def track_split(track_list, num):
-    w, h = 5, num
-    split_tracks = [[0 for x in range(w)] for y in range(h)]
+def track_split(track_list, num_groups):
+    num_seeds_per_group = 5
+    split_tracks = [[0 for _ in range(num_seeds_per_group)] for _ in range(num_groups)]
 
-    i, j = 0, 0
-    q = 0
+    group_index, seed_index = 0, 0
+    track_index = 0
 
     logger.info('Splitting top tracks...')
-    while i < num:
-        if j < 5:
-            split_tracks[i][j] = track_list[q]
-            j += 1
-            q += 1
+    while group_index < num_groups:
+        if seed_index < num_seeds_per_group:
+            split_tracks[group_index][seed_index] = track_list[track_index]
+            seed_index += 1
+            track_index += 1
         else:
-            j = 0
-            i += 1
+            seed_index = 0
+            group_index += 1
 
     return split_tracks
 
