@@ -1,5 +1,7 @@
 # SpotifyProject
 
+![Screenshot](https://i.imgur.com/4ov6G3r.png)
+
 ## Setup:
 
 You will need to create a .env file which resides in the spotify_project directory (see .env.example).  This file will need to include a CLIENT_SECRET and a CLIENT_ID, each on their own line.  These can be obtained by registering an app in the Spotify Developer Portal: https://developer.spotify.com/.
