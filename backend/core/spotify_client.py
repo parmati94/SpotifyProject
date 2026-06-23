@@ -8,12 +8,17 @@ discovery now comes from `core.recommender` + `core.resolver`.
 
 from __future__ import annotations
 
+import os
+import random
+
 from backend.common.logging_config import logger
 from .recommender.base import Seed
 
-# Top-tracks time ranges, tried in order until one yields enough seeds.
+# How many seed tracks to feed the recommender. More seeds = broader taste coverage;
+# past ~50 it's diminishing returns + slower (one Last.fm call per seed). Env-tunable.
+_MAX_SEEDS = max(1, int(os.getenv("MAX_SEEDS", "50")))
+# Top-tracks listening windows — blended for the daily so it spans recent + enduring taste.
 _TIME_RANGES = ("short_term", "medium_term", "long_term")
-_MIN_SEEDS = 20
 
 
 def _track_to_seed(track: dict) -> Seed | None:
@@ -21,6 +26,28 @@ def _track_to_seed(track: dict) -> Seed | None:
     artists = track.get("artists") or []
     artist = (artists[0].get("name") or "").strip() if artists else ""
     return Seed(title=title, artist=artist) if title and artist else None
+
+
+def _key(seed: Seed) -> tuple[str, str]:
+    return (seed.title.lower(), seed.artist.lower())
+
+
+def _recency_weighted_sample(seeds_newest_first: list[Seed], n: int) -> list[Seed]:
+    """Pick `n` seeds favoring the front of the list (recently added), without replacement.
+
+    Uses Efraimidis–Spirakis weighted sampling: each item gets key = u**(1/weight) with a
+    linear recency weight (newest = heaviest), and we take the top-n keys. Recent tracks are
+    much more likely, but older ones can still appear — so a playlist's current lean dominates
+    while keeping some breadth.
+    """
+    total = len(seeds_newest_first)
+    keyed = []
+    for i, seed in enumerate(seeds_newest_first):
+        weight = total - i  # i=0 is newest → heaviest
+        u = random.random() or 1e-12
+        keyed.append((u ** (1.0 / weight), seed))
+    keyed.sort(key=lambda k: k[0], reverse=True)
+    return [seed for _, seed in keyed[:n]]
 
 
 class SpotifyClient:
@@ -32,37 +59,57 @@ class SpotifyClient:
         return self.sp.me()["id"]
 
     # --- seeds ---
-    def top_track_seeds(self, limit: int = _MIN_SEEDS) -> list[Seed]:
-        """Seeds from the user's top tracks, preferring the most recent listening."""
-        last: list[Seed] = []
+    def top_track_seeds(self, limit: int = _MAX_SEEDS) -> list[Seed]:
+        """Seeds blended across all listening windows (recent + enduring), deduped and
+        shuffled, capped at `limit`. Shuffled so a daily varies day to day."""
+        seen: set[tuple[str, str]] = set()
+        seeds: list[Seed] = []
         for time_range in _TIME_RANGES:
             logger.info("Getting top tracks for %s...", time_range)
-            res = self.sp.current_user_top_tracks(time_range=time_range, limit=limit, offset=0)
-            seeds = [s for s in map(_track_to_seed, res.get("items", [])) if s]
-            last = seeds
-            if len(seeds) >= _MIN_SEEDS:
-                return seeds
-        if not last:
+            res = self.sp.current_user_top_tracks(time_range=time_range, limit=50, offset=0)
+            for item in res.get("items", []):
+                seed = _track_to_seed(item)
+                if seed and _key(seed) not in seen:
+                    seen.add(_key(seed))
+                    seeds.append(seed)
+        if not seeds:
             raise ValueError("No top tracks available to seed recommendations.")
-        return last
+        random.shuffle(seeds)
+        chosen = seeds[:limit]
+        logger.info("Seeded from %d top tracks (%d available).", len(chosen), len(seeds))
+        return chosen
 
-    def playlist_seeds(self, playlist_id: str, limit: int = 50) -> list[Seed]:
-        """Seeds from the tracks of an existing playlist."""
-        seeds: list[Seed] = []
+    def playlist_seeds(self, playlist_id: str, limit: int = _MAX_SEEDS) -> list[Seed]:
+        """Recency-weighted sample of a playlist's tracks (up to `limit`). Spotify gives an
+        `added_at` per track; recently-added tracks — the listener's current lean — are
+        favored, with older ones still possible for breadth. Scales with playlist size."""
+        entries: list[tuple[Seed, str]] = []
         offset = 0
-        while len(seeds) < limit:
-            batch = self.sp.playlist_items(playlist_id, offset=offset, limit=100)
+        while True:
+            batch = self.sp.playlist_items(
+                playlist_id,
+                offset=offset,
+                limit=100,
+                fields="total,items(added_at,track(name,artists(name)))",
+            )
             items = batch.get("items", [])
             if not items:
                 break
             for item in items:
                 seed = _track_to_seed(item.get("track") or {})
                 if seed:
-                    seeds.append(seed)
+                    entries.append((seed, item.get("added_at") or ""))
             offset += len(items)
             if offset >= batch.get("total", 0):
                 break
-        return seeds[:limit]
+        if not entries:
+            return []
+        # Newest first (ISO-8601 added_at sorts lexicographically), then recency-weighted pick.
+        entries.sort(key=lambda e: e[1], reverse=True)
+        n = min(limit, len(entries))
+        chosen = _recency_weighted_sample([seed for seed, _ in entries], n)
+        logger.info("Seeded from %d of %d playlist tracks (recency-weighted).", len(chosen), len(entries))
+        return chosen
 
     # --- playlist reads ---
     def all_playlists(self) -> list[dict]:
