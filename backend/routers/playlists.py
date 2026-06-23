@@ -14,6 +14,7 @@ from backend.models.schemas import (
     FromPlaylistRequest,
     MessageResponse,
     PlaylistItem,
+    PlaylistMutationResponse,
     PlaylistsResponse,
 )
 
@@ -34,6 +35,7 @@ def list_playlists(client: SpotifyClient = Depends(get_client)) -> PlaylistsResp
             images = p.get("images") or []
             items.append(
                 PlaylistItem(
+                    id=p["id"],
                     name=p["name"],
                     total_tracks=p["tracks"]["total"],
                     image_url=images[0]["url"] if images else DEFAULT_IMAGE_URL,
@@ -46,12 +48,13 @@ def list_playlists(client: SpotifyClient = Depends(get_client)) -> PlaylistsResp
     return PlaylistsResponse(playlists=items)
 
 
-@router.post("/daily", response_model=MessageResponse)
+@router.post("/daily", response_model=PlaylistMutationResponse)
 def create_daily(
     client: SpotifyClient = Depends(get_client),
     recommender: Recommender = Depends(get_recommender),
-) -> MessageResponse:
-    return MessageResponse(message=_run(playlist_ops.create_daily_playlist, client, recommender))
+) -> PlaylistMutationResponse:
+    res = _run(playlist_ops.create_daily_playlist, client, recommender)
+    return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)
 
 
 @router.delete("/daily", response_model=MessageResponse)
@@ -59,33 +62,33 @@ def delete_daily(client: SpotifyClient = Depends(get_client)) -> MessageResponse
     return MessageResponse(message=playlist_ops.delete_daily_playlists(client))
 
 
-@router.post("/weekly", response_model=MessageResponse)
+@router.post("/weekly", response_model=PlaylistMutationResponse)
 def extend_weekly(
     client: SpotifyClient = Depends(get_client),
     recommender: Recommender = Depends(get_recommender),
-) -> MessageResponse:
-    return MessageResponse(message=_run(playlist_ops.extend_weekly_playlist, client, recommender))
+) -> PlaylistMutationResponse:
+    res = _run(playlist_ops.extend_weekly_playlist, client, recommender)
+    return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)
 
 
-@router.post("/from-playlist", response_model=MessageResponse)
+@router.post("/from-playlist", response_model=PlaylistMutationResponse)
 def create_from_playlist(
     body: FromPlaylistRequest,
     client: SpotifyClient = Depends(get_client),
     recommender: Recommender = Depends(get_recommender),
-) -> MessageResponse:
-    return MessageResponse(
-        message=_run(
-            playlist_ops.create_playlist_from_playlist,
-            client,
-            recommender,
-            body.source_playlist,
-            body.target_playlist,
-            body.num_songs,
-        )
+) -> PlaylistMutationResponse:
+    res = _run(
+        playlist_ops.create_playlist_from_playlist,
+        client,
+        recommender,
+        body.source_playlist,
+        body.target_playlist,
+        body.num_songs,
     )
+    return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)
 
 
-def _run(fn, *args) -> str:
+def _run(fn, *args) -> playlist_ops.PlaylistResult:
     """Call a core playlist op, mapping known failures to clean HTTP errors:
     ValueError → 400 (e.g. nothing resolved); RecommenderError → 502 with the
     engine's reason (e.g. Claude credits exhausted, bad key, rate limit)."""

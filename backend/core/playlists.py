@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import random
 import re
+from dataclasses import dataclass
 from datetime import datetime
 
 from backend.common.constants import APP_PLAYLIST_MARKER
@@ -16,6 +17,20 @@ from backend.common.logging_config import logger
 from .recommender.base import Recommender, Seed
 from .resolver import resolve_all
 from .spotify_client import SpotifyClient
+
+
+@dataclass
+class PlaylistResult:
+    """Outcome of a create/extend op. `track_count` is the playlist's *full* track total
+    after the op — the API returns it so the UI can show the right number immediately,
+    since Spotify's playlist-list endpoint reports a stale 0 for a few seconds after
+    creation. `playlist_id` lets the UI patch the exact playlist even when several share a
+    name. All but `message` are None for informational no-op messages."""
+
+    message: str
+    playlist_id: str | None = None
+    name: str | None = None
+    track_count: int | None = None
 
 WEEKLY_PLAYLIST_NAME = "Weekly Extended Playlist"
 DEFAULT_DAILY_COUNT = 40
@@ -66,18 +81,18 @@ def _recommend_uris(
 
 def create_daily_playlist(
     client: SpotifyClient, recommender: Recommender, count: int = DEFAULT_DAILY_COUNT
-) -> str:
+) -> PlaylistResult:
     seeds = client.top_track_seeds()
     uris = _recommend_uris(client, recommender, seeds, count)
     if not uris:
         raise ValueError("No playable recommendations were found. Try again later.")
     name = daily_playlist_name()
-    client.create_playlist(client.current_user_id(), name, uris, description=APP_PLAYLIST_MARKER)
+    pid = client.create_playlist(client.current_user_id(), name, uris, description=APP_PLAYLIST_MARKER)
     logger.info("Daily playlist created: %s (%d tracks)", name, len(uris))
-    return f"Daily playlist created with name: {name}"
+    return PlaylistResult(f"Daily playlist created with name: {name}", pid, name, len(uris))
 
 
-def extend_weekly_playlist(client: SpotifyClient, recommender: Recommender) -> str:
+def extend_weekly_playlist(client: SpotifyClient, recommender: Recommender) -> PlaylistResult:
     playlist_id = client.find_playlist_id(WEEKLY_PLAYLIST_NAME)
     if playlist_id is None:
         logger.info("%s does not exist; creating it.", WEEKLY_PLAYLIST_NAME)
@@ -85,10 +100,12 @@ def extend_weekly_playlist(client: SpotifyClient, recommender: Recommender) -> s
         uris = _recommend_uris(client, recommender, seeds, WEEKLY_EXTEND_COUNT)
         if not uris:
             raise ValueError("No playable recommendations were found. Try again later.")
-        client.create_playlist(
+        pid = client.create_playlist(
             client.current_user_id(), WEEKLY_PLAYLIST_NAME, uris, description=APP_PLAYLIST_MARKER
         )
-        return f"Playlist created with name: {WEEKLY_PLAYLIST_NAME}"
+        return PlaylistResult(
+            f"Playlist created with name: {WEEKLY_PLAYLIST_NAME}", pid, WEEKLY_PLAYLIST_NAME, len(uris)
+        )
 
     existing = client.playlist_track_uris(playlist_id)
     seeds = client.top_track_seeds()
@@ -99,7 +116,12 @@ def extend_weekly_playlist(client: SpotifyClient, recommender: Recommender) -> s
         raise ValueError("No new playable recommendations were found to add.")
     client.add_tracks(playlist_id, uris)
     logger.info("Extended %s by %d tracks.", WEEKLY_PLAYLIST_NAME, len(uris))
-    return f"Weekly playlist extended by {len(uris)} tracks."
+    return PlaylistResult(
+        f"Weekly playlist extended by {len(uris)} tracks.",
+        playlist_id,
+        WEEKLY_PLAYLIST_NAME,
+        len(existing) + len(uris),  # full total after the add, for the UI count patch
+    )
 
 
 def delete_daily_playlists(client: SpotifyClient) -> str:
@@ -119,21 +141,21 @@ def create_playlist_from_playlist(
     source_name: str,
     target_name: str,
     count: int,
-) -> str:
+) -> PlaylistResult:
     source_id = client.find_playlist_id(source_name)
     if source_id is None:
-        return "Playlist creation failed. Source playlist must already exist."
+        return PlaylistResult("Playlist creation failed. Source playlist must already exist.")
 
     count = max(1, min(count, _MAX_PLAYLIST_SONGS))
     seeds = client.playlist_seeds(source_id)
     if not seeds:
-        return f"Source playlist '{source_name}' has no usable tracks to seed from."
+        return PlaylistResult(f"Source playlist '{source_name}' has no usable tracks to seed from.")
 
     uris = _recommend_uris(client, recommender, seeds, count)
     if not uris:
         raise ValueError("No playable recommendations were found. Try again later.")
-    client.create_playlist(
+    pid = client.create_playlist(
         client.current_user_id(), target_name, uris, description=APP_PLAYLIST_MARKER
     )
     logger.info("Playlist created: %s (%d tracks)", target_name, len(uris))
-    return f"Playlist created: {target_name}"
+    return PlaylistResult(f"Playlist created: {target_name}", pid, target_name, len(uris))

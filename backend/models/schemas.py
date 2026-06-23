@@ -9,6 +9,15 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class PlaylistMutationResponse(MessageResponse):
+    # Id/name + full track count of the affected playlist, so the UI can show the right
+    # count right away (Spotify's playlist-list reports a stale 0 just after creation) and
+    # patch the exact playlist even when several share a name (e.g. two dailies same day).
+    id: str | None = None
+    name: str | None = None
+    total_tracks: int | None = None
+
+
 class SessionResponse(BaseModel):
     authenticated: bool
     # Dev-only: tells the SPA to route "Connect" through /dev/login. Always false in prod.
@@ -16,6 +25,9 @@ class SessionResponse(BaseModel):
 
 
 class PlaylistItem(BaseModel):
+    # Spotify playlist id — unique key for the UI (playlist names are NOT unique; e.g.
+    # you can have two dailies named the same date).
+    id: str
     name: str
     total_tracks: int
     image_url: str

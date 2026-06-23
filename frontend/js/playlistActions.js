@@ -56,12 +56,12 @@ export function playlistActions() {
     // ── Actions ────────────────────────────────────────────────────────────
     async createDaily() {
       await this._runAction('daily', api.createDaily, 'Building your daily mix…',
-        () => this.loadPlaylists());  // reflect the new playlist in the browser
+        (data) => this._refreshAfterMutation(data));  // reflect the new playlist in the browser
     },
 
     async extendWeekly() {
       await this._runAction('weekly', api.extendWeekly, 'Extending your weekly playlist…',
-        () => this.loadPlaylists());  // weekly may have just been created
+        (data) => this._refreshAfterMutation(data));  // weekly may have just been created
     },
 
     async deleteDaily() {
@@ -89,9 +89,9 @@ export function playlistActions() {
           num_songs: this.createForm.count,
         }),
         'Crafting your new playlist…',
-        async () => {
+        async (data) => {
           this.createForm.target = '';
-          await this.loadPlaylists(); // reflect the new playlist in the browser
+          await this._refreshAfterMutation(data); // reflect the new playlist in the browser
         },
       );
     },
@@ -119,6 +119,20 @@ export function playlistActions() {
     },
 
     // ── Internals ──────────────────────────────────────────────────────────
+    // Reload the browser, then patch the affected playlist's count from the create
+    // response. Spotify's playlist-list endpoint reports a stale 0 tracks for a few
+    // seconds after creation, so without this the new card flashes "0 tracks" until a
+    // later refresh. We only ever bump the count up, so a correct reload isn't clobbered.
+    async _refreshAfterMutation(data) {
+      await this.loadPlaylists();
+      if (data?.total_tracks == null) return;
+      // Match by id (names aren't unique — e.g. two dailies the same day); fall back to name.
+      const p = data.id
+        ? this.playlists.find((pl) => pl.id === data.id)
+        : this.playlists.find((pl) => pl.name === data.name);
+      if (p && (p.total_tracks || 0) < data.total_tracks) p.total_tracks = data.total_tracks;
+    },
+
     // Runs a mutating action under the global mutex with a "working" toast,
     // then a success/error toast. `onSuccess` runs after a successful call.
     async _runAction(key, fn, workingMessage, onSuccess) {
@@ -129,7 +143,7 @@ export function playlistActions() {
       try {
         const data = await fn();
         this._toast(true, data?.message ?? 'Done.');
-        if (onSuccess) await onSuccess();
+        if (onSuccess) await onSuccess(data);
       } catch (e) {
         this._handleError(e, 'Something went wrong.');
       } finally {
