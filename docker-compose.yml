@@ -1,22 +1,33 @@
-version: '3'
+name: spotifyproject
 services:
-  frontend:
-    image: spotifyproject-frontend:latest
+  spotifyproject:
+    # Prebuilt image from CI. Build from source via docker-compose.dev.yml.
+    image: parmati/spotifyproject:latest
+    container_name: spotifyproject
     ports:
-      - "${FRONTEND_PORT}:3000"
-    depends_on:
-      - api
+      - "5470:80"
+    # Secrets live in backend/.env (gitignored); see backend/.env.example.
+    # Convention: credentials in .env, non-secret config inline below.
+    env_file:
+      - ./backend/.env   # CLIENT_ID, CLIENT_SECRET, SESSION_SECRET, GEMINI_API_KEY
     environment:
-      - REACT_APP_API_BASE_URL=http://${API_HOST}:${API_PORT}
-    restart: always
-  api:
-    image: spotifyproject-api:latest
-    ports:
-      - "${API_PORT}:8000"
-    environment:
-      - REDIRECT_URI=http://${API_HOST}:${API_PORT}/callback
-      - FRONTEND_URL=http://${FRONTEND_HOST}:${FRONTEND_PORT}
-      - LOG_LEVEL=info
-    volumes:
-    - /path/to/logs:/app/spotify_project/logs
-    restart: always
+      - TZ=America/New_York
+      # Must EXACTLY match a Redirect URI registered on the Spotify app AND the
+      # public origin this container is served from. Spotify forbids "localhost"
+      # — use the loopback IP literal, or an HTTPS origin behind a reverse proxy.
+      # (For a personal deploy with a real domain, use docker-compose.local.yml.)
+      - REDIRECT_URI=http://127.0.0.1:5470/callback
+      # Engine toggle: lastfm (default) | gemini | claude | catalog. Keys live in .env;
+      # a keyed engine with no key degrades to catalog (Spotify-native).
+      - RECOMMENDER=lastfm
+      - GEMINI_MODEL=gemini-2.5-flash
+      - CLAUDE_MODEL=claude-sonnet-4-6
+      - MAX_SEEDS=50            # seed tracks per build (blended top tracks / recency-weighted playlist)
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

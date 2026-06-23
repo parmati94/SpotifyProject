@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Build and Push Docker Image
 
 on:
   workflow_dispatch:
@@ -6,40 +6,40 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
-    environment: Main  # Specify the environment
+    environment: Main
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build and push Docker image for spotifyproject-frontend
-      uses: docker/build-push-action@v2
-      with:
-        context: ./client
-        push: true
-        tags: parmati/spotifyproject-frontend:latest
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-    - name: Build and push Docker image for spotifyproject-api
-      uses: docker/build-push-action@v2
-      with:
-        context: ./spotify_project
-        push: true
-        tags: parmati/spotifyproject-api:latest
-        
-    - name: Build and push Docker image for spotifyproject-api-private
-      uses: docker/build-push-action@v2
-      with:
-        context: ./spotify_project
-        file: ./spotify_project/Dockerfile
-        push: true
-        tags: parmati/spotifyproject-api-private:latest
-        build-args: |
-          CLIENT_ID=${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET=${{ secrets.CLIENT_SECRET }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: parmati/spotifyproject
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      # Single combined image (frontend build + python/nginx/supervisor runtime).
+      # Secrets are provided at runtime via env (compose), never baked into the image.
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

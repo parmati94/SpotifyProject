@@ -1,0 +1,34 @@
+name: spotifyproject-dev
+# Dev with hot reload. Builds the image locally with DEV_MODE=true (uvicorn --reload) and
+# bind-mounts the backend source so edits to backend/ restart the API automatically. The
+# frontend is the host-built dist/ mounted into nginx — rebuild it when you change the UI:
+#   cd frontend && npm run build        (add `-- --watch` to rebuild continuously)
+services:
+  spotifyproject:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - DEV_MODE=true
+    image: spotifyproject:dev
+    container_name: spotifyproject-dev
+    ports:
+      - "5471:80"
+    env_file:
+      - ./backend/.env   # your real CLIENT_ID/SECRET/GEMINI_API_KEY/SESSION_SECRET
+    environment:
+      - TZ=America/New_York
+      # Override so OAuth comes back to THIS origin (register it on the Spotify app too).
+      - REDIRECT_URI=http://127.0.0.1:5471/callback
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend:/app/backend                          # backend live-reload via uvicorn --reload
+      - ./frontend/dist:/usr/share/nginx/html           # host-built frontend (cd frontend && npm run build)
+      - ./supervisor/supervisord.dev.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

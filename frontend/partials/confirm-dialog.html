@@ -1,0 +1,33 @@
+<!-- Confirm dialog — triggered via showConfirm({ title, message, confirmLabel, danger }) -->
+<div x-show="confirmDialog.show"
+     x-transition.opacity
+     @keydown.escape.window="confirmDialogCancel()"
+     class="fixed inset-0 z-[1400] flex items-center justify-center p-4" style="display:none">
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="confirmDialogCancel()"></div>
+
+  <div x-show="confirmDialog.show"
+       x-transition:enter="transition ease-out duration-150"
+       x-transition:enter-start="opacity-0 scale-95"
+       x-transition:enter-end="opacity-100 scale-100"
+       @keydown.enter.window="confirmDialogAccept()"
+       class="relative w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6">
+    <div class="flex items-start gap-4 mb-2">
+      <div class="shrink-0 w-10 h-10 rounded-full grid place-items-center"
+           :class="confirmDialog.danger ? 'bg-danger-900/50' : 'bg-warn-900/50'">
+        <svg class="w-5 h-5" :class="confirmDialog.danger ? 'text-danger-400' : 'text-warn-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 class="text-base font-semibold text-white" x-text="confirmDialog.title"></h3>
+        <p class="mt-1 text-sm text-gray-400 leading-relaxed" x-html="confirmDialog.message"></p>
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-3 mt-6">
+      <button @click="confirmDialogCancel()"
+              class="px-4 py-2 text-sm text-gray-300 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors">Cancel</button>
+      <button @click="confirmDialogAccept()"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-white"
+              :class="confirmDialog.danger ? 'bg-danger-600 hover:bg-danger-500' : 'bg-warn-600 hover:bg-warn-500'"
+              x-text="confirmDialog.confirmLabel"></button>
+    </div>
+  </div>
+</div>

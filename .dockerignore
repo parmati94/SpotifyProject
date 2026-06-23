@@ -1,0 +1,35 @@
+# Version control
+.git
+.gitignore
+
+# Docker / compose (not needed inside the image)
+.dockerignore
+docker-compose*.yml
+
+# Dependencies — reinstalled inside the image
+**/node_modules
+
+# Build outputs — rebuilt inside the image
+frontend/dist
+
+# Python caches / local runtime
+**/__pycache__
+**/*.pyc
+backend/logs
+
+# Secrets / local env (never bake into the image)
+.env
+**/.env
+.gemini-api
+.spotify-api
+
+# Tests & dev/docs tooling
+tests
+PLANNING.md
+CLAUDE.md
+.claude
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
