@@ -46,6 +46,13 @@ def exchange_code(code: str) -> dict:
     return _oauth().get_access_token(code, as_dict=True, check_cache=False)
 
 
+def dev_token_from_refresh(refresh_token: str) -> dict:
+    """Dev-only: mint a fresh token_info from a stored refresh token, skipping the
+    interactive OAuth flow. Lets a headless/LAN box authenticate without a browser
+    round-trip or a registered redirect URI. Gated by Settings.dev_auth at the caller."""
+    return _oauth().refresh_access_token(refresh_token)
+
+
 def refresh_if_expired(token_info: dict) -> dict:
     oauth = _oauth()
     if oauth.is_token_expired(token_info):

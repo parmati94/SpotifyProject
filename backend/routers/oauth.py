@@ -11,6 +11,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 
 from backend.common.auth import exchange_code, login_url
+from backend.common.config import get_settings
 from backend.common.logging_config import logger
 
 router = APIRouter(tags=["auth"])
@@ -35,4 +36,10 @@ def callback(request: Request) -> RedirectResponse:
         return RedirectResponse(url="/?login=failure")
     request.session["token_info"] = token_info
     logger.info("User authenticated; token stored in session.")
+    if get_settings().dev_auth:
+        # One-time capture: copy this into DEV_REFRESH_TOKEN on your dev box, then turn
+        # DEV_AUTH back off here so refresh tokens stop hitting the logs.
+        logger.warning(
+            "DEV_AUTH capture — set DEV_REFRESH_TOKEN=%s", token_info.get("refresh_token")
+        )
     return RedirectResponse(url="/?login=success")

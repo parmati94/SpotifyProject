@@ -2,11 +2,24 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from backend.models.schemas import MessageResponse, SessionResponse
+from backend.common.config import Settings, get_settings
+from backend.deps import SESSION_ENGINE_KEY, selected_engine
+from backend.models.schemas import (
+    MessageResponse,
+    RecommenderInfo,
+    RecommenderStatus,
+    SessionResponse,
+    SetRecommenderRequest,
+)
 
 router = APIRouter(prefix="/api", tags=["system"])
+
+
+def _recommender_status(request: Request, settings: Settings) -> RecommenderStatus:
+    available = [RecommenderInfo(**e) for e in settings.available_engines()]
+    return RecommenderStatus(active=selected_engine(request, settings), available=available)
 
 
 @router.get("/health")
@@ -15,11 +28,42 @@ def health() -> dict:
 
 
 @router.get("/session", response_model=SessionResponse)
-def session_status(request: Request) -> SessionResponse:
-    return SessionResponse(authenticated=bool(request.session.get("token_info")))
+def session_status(
+    request: Request, settings: Settings = Depends(get_settings)
+) -> SessionResponse:
+    return SessionResponse(
+        authenticated=bool(request.session.get("token_info")), dev=settings.dev_auth
+    )
 
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(request: Request) -> MessageResponse:
     request.session.clear()
     return MessageResponse(message="Logged out.")
+
+
+@router.get("/recommender", response_model=RecommenderStatus)
+def get_recommender_status(
+    request: Request, settings: Settings = Depends(get_settings)
+) -> RecommenderStatus:
+    """This session's active engine and the credential-gated list it may switch between."""
+    return _recommender_status(request, settings)
+
+
+@router.put("/recommender", response_model=RecommenderStatus)
+def set_recommender(
+    body: SetRecommenderRequest,
+    request: Request,
+    settings: Settings = Depends(get_settings),
+) -> RecommenderStatus:
+    """Switch this session's engine. Only the available (credential-backed) engines are
+    accepted; the choice is stored in the session cookie, so it's per-user."""
+    available = {e["id"] for e in settings.available_engines()}
+    if body.engine not in available:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Engine '{body.engine}' is unavailable. Choose one of: "
+            f"{', '.join(sorted(available))}.",
+        )
+    request.session[SESSION_ENGINE_KEY] = body.engine
+    return _recommender_status(request, settings)

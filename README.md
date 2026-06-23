@@ -63,16 +63,21 @@ defaults as a fallback. Copy `backend/.env.example` to `backend/.env` to start.
 | Variable | Notes |
 |----------|-------|
 | `REDIRECT_URI` | Must exactly match a registered Redirect URI **and** the origin you serve from. Spotify [forbids `localhost`](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri) — use the loopback IP literal (`http://127.0.0.1:PORT/callback`) and browse via `127.0.0.1` too |
-| `RECOMMENDER` | Engine toggle: `lastfm` (default) · `gemini` · `claude` · `catalog` — see below |
+| `RECOMMENDER` | **Default** engine: `lastfm` (default) · `gemini` · `claude` · `catalog` — each user can switch at runtime in Settings (see below) |
 | `GEMINI_MODEL` | Defaults to `gemini-2.5-flash` |
 | `CLAUDE_MODEL` | Defaults to `claude-sonnet-4-6` |
 | `LOG_LEVEL` | `INFO` by default |
 
 ### Recommendation engines
 
-Song suggestions come from a swappable engine (set `RECOMMENDER`); every suggestion is then
-verified against Spotify search before it's added, so playlists only ever contain real, playable
-tracks.
+Song suggestions come from a swappable engine; every suggestion is then verified against Spotify
+search before it's added, so playlists only ever contain real, playable tracks.
+
+`RECOMMENDER` sets the **default** engine. From the **Settings** panel each user can switch between
+the engines you've supplied credentials for — the selector only lists engines whose API key is
+present, shows each LLM's configured model, and the active engine appears as a pill in the header.
+The choice is stored per session (the signed cookie), so different users get independent engines
+with no shared server state.
 
 | Engine | What it is | Trade-off |
 |--------|------------|-----------|

@@ -11,6 +11,7 @@ document.addEventListener('alpine:init', () => {
     // ── Auth ─────────────────────────────────────────────────────────────
     checking: true,        // initial /api/session probe in flight
     authenticated: false,
+    devAuth: false,        // dev box: route "Connect" through the refresh-token bypass
 
     // ── Toast (single global action-result banner) ───────────────────────
     actionResult: null,    // { ok, message }
@@ -18,6 +19,9 @@ document.addEventListener('alpine:init', () => {
 
     // ── Confirm dialog (promise-based) ───────────────────────────────────
     confirmDialog: { show: false, title: '', message: '', confirmLabel: 'Confirm', danger: true, resolve: null },
+
+    // ── Recommendation engine (per-session, server-backed) ──────────────
+    recommender: { active: null, available: [], switching: false },
 
     // ── Theme ────────────────────────────────────────────────────────────
     showSettings: false,
@@ -41,6 +45,7 @@ document.addEventListener('alpine:init', () => {
 
       await this.checkSession();
       this.checking = false;
+      this.loadRecommender();  // app config, not gated on auth; fine to fire after probe
 
       // Success toasts auto-dismiss; errors stay until dismissed.
       this.$watch('actionResult', (r) => {
@@ -51,8 +56,9 @@ document.addEventListener('alpine:init', () => {
 
     async checkSession() {
       try {
-        const { authenticated } = await api.session();
+        const { authenticated, dev } = await api.session();
         this.authenticated = !!authenticated;
+        this.devAuth = !!dev;
         if (this.authenticated) await this.loadPlaylists();
       } catch {
         this.authenticated = false;
@@ -60,7 +66,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     login() {
-      window.location.href = '/login';
+      // Dev box: /dev/login seeds the session from DEV_REFRESH_TOKEN (no OAuth round-trip,
+      // which a non-loopback http origin can't do anyway). Prod: real Spotify OAuth.
+      window.location.href = this.devAuth ? '/dev/login' : '/login';
     },
 
     async logout() {
@@ -69,6 +77,42 @@ document.addEventListener('alpine:init', () => {
       this.playlists = [];
       this.showSettings = false;
       this._toast(true, 'Disconnected from Spotify.');
+    },
+
+    // ── Recommendation engine ───────────────────────────────────────────
+    // The server decides which engines are selectable (those with credentials in
+    // .env) and which is active for this session; we just render and switch.
+    async loadRecommender() {
+      try {
+        const data = await api.recommender();
+        this.recommender.active = data.active;
+        this.recommender.available = data.available ?? [];
+      } catch { /* non-fatal: selector/badge just stay hidden */ }
+    },
+
+    activeEngine() {
+      return this.recommender.available.find((e) => e.id === this.recommender.active) || null;
+    },
+    engineLabel(e) {
+      return e ? (e.model ? `${e.label} · ${e.model}` : e.label) : '';
+    },
+
+    async selectRecommender(id) {
+      if (id === this.recommender.active || this.recommender.switching) return;
+      const prev = this.recommender.active;
+      this.recommender.active = id;          // optimistic
+      this.recommender.switching = true;
+      try {
+        const data = await api.setRecommender(id);
+        this.recommender.active = data.active;
+        this.recommender.available = data.available ?? this.recommender.available;
+        this._toast(true, `Recommendations now use ${this.engineLabel(this.activeEngine())}.`);
+      } catch (e) {
+        this.recommender.active = prev;      // roll back on failure
+        this._handleError(e, 'Could not change the recommendation engine.');
+      } finally {
+        this.recommender.switching = false;
+      }
     },
 
     // ── Theme ────────────────────────────────────────────────────────────

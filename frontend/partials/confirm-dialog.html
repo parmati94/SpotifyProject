@@ -1,14 +1,26 @@
 <!-- Confirm dialog — triggered via showConfirm({ title, message, confirmLabel, danger }) -->
 <div x-show="confirmDialog.show"
-     x-transition.opacity
+     x-transition:leave="duration-150"
      @keydown.escape.window="confirmDialogCancel()"
      class="fixed inset-0 z-[1400] flex items-center justify-center p-4" style="display:none">
-  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="confirmDialogCancel()"></div>
+  <!-- Backdrop fades via its own opacity (not an ancestor's) so backdrop-blur doesn't
+       flash the page on close — see settings.html for the why. -->
+  <div x-show="confirmDialog.show"
+       x-transition:enter="transition-opacity ease-out duration-150"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition-opacity ease-in duration-150"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="confirmDialogCancel()"></div>
 
   <div x-show="confirmDialog.show"
        x-transition:enter="transition ease-out duration-150"
        x-transition:enter-start="opacity-0 scale-95"
        x-transition:enter-end="opacity-100 scale-100"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100 scale-100"
+       x-transition:leave-end="opacity-0 scale-95"
        @keydown.enter.window="confirmDialogAccept()"
        class="relative w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-6">
     <div class="flex items-start gap-4 mb-2">

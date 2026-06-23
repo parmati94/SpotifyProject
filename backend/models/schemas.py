@@ -11,6 +11,8 @@ class MessageResponse(BaseModel):
 
 class SessionResponse(BaseModel):
     authenticated: bool
+    # Dev-only: tells the SPA to route "Connect" through /dev/login. Always false in prod.
+    dev: bool = False
 
 
 class PlaylistItem(BaseModel):
@@ -22,6 +24,22 @@ class PlaylistItem(BaseModel):
 
 class PlaylistsResponse(BaseModel):
     playlists: list[PlaylistItem]
+
+
+class RecommenderInfo(BaseModel):
+    id: str
+    label: str
+    model: str | None = None
+
+
+class RecommenderStatus(BaseModel):
+    """The session's active engine plus the list it may switch between (credential-gated)."""
+    active: str
+    available: list[RecommenderInfo]
+
+
+class SetRecommenderRequest(BaseModel):
+    engine: str = Field(..., min_length=1)
 
 
 class FromPlaylistRequest(BaseModel):

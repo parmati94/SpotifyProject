@@ -1,7 +1,18 @@
-<!-- Settings slide-over: accent theme picker (persisted to localStorage). -->
-<div x-show="showSettings" x-transition.opacity @keydown.escape.window="showSettings = false"
+<!-- Settings slide-over. The backdrop fades via its OWN opacity, never an ancestor's:
+     animating opacity on a parent of a backdrop-blur element makes Chrome re-composite
+     the blur and flash the whole page on close. The wrapper carries no opacity
+     transition — it only stays mounted for the 200ms leave so the children animate out. -->
+<div x-show="showSettings" x-transition:leave="duration-200"
+     @keydown.escape.window="showSettings = false"
      class="fixed inset-0 z-[1300] flex justify-end" style="display:none">
-  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showSettings = false"></div>
+  <div x-show="showSettings"
+       x-transition:enter="transition-opacity ease-out duration-200"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="transition-opacity ease-in duration-200"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
+       class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showSettings = false"></div>
 
   <aside x-show="showSettings"
          x-transition:enter="transition ease-out duration-200"
@@ -15,6 +26,31 @@
       <h2 class="font-display text-lg font-bold">Settings</h2>
       <button @click="showSettings = false" aria-label="Close" class="grid place-items-center w-8 h-8 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800">✕</button>
     </div>
+
+    <!-- Recommendation engine: only the engines the server reports as available
+         (credentials present in .env) appear; the active one is per-session. -->
+    <template x-if="recommender.available.length">
+      <div class="mb-8">
+        <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Recommendation engine</h3>
+        <div class="space-y-2">
+          <template x-for="e in recommender.available" :key="e.id">
+            <button @click="selectRecommender(e.id)" :disabled="recommender.switching"
+                    class="w-full flex items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    :class="recommender.active === e.id ? 'border-accent-500 bg-accent-500/10' : 'border-gray-800 hover:border-gray-600 bg-gray-900/40'">
+              <span class="grid place-items-center w-5 h-5 rounded-full border-2 shrink-0"
+                    :class="recommender.active === e.id ? 'border-accent-400' : 'border-gray-600'">
+                <span x-show="recommender.active === e.id" class="w-2.5 h-2.5 rounded-full bg-accent-400"></span>
+              </span>
+              <span class="min-w-0">
+                <span class="block text-sm font-medium text-white" x-text="e.label"></span>
+                <span x-show="e.model" class="block text-xs text-gray-500 truncate" x-text="e.model"></span>
+              </span>
+            </button>
+          </template>
+        </div>
+        <p class="text-xs text-gray-500 mt-3">Which engine picks your recommendations. Saved to your session.</p>
+      </div>
+    </template>
 
     <h3 class="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Accent theme</h3>
     <div class="grid grid-cols-5 gap-3">

@@ -17,8 +17,7 @@ services:
       # — use the loopback IP literal, or an HTTPS origin behind a reverse proxy.
       # (For a personal deploy with a real domain, use docker-compose.local.yml.)
       - REDIRECT_URI=http://127.0.0.1:5470/callback
-      # Engine toggle: lastfm (default) | gemini | claude | catalog. Keys live in .env;
-      # a keyed engine with no key degrades to catalog (Spotify-native).
+      # Default engine: lastfm | gemini | claude | catalog (users switch in Settings).
       - RECOMMENDER=lastfm
       - GEMINI_MODEL=gemini-2.5-flash
       - CLAUDE_MODEL=claude-sonnet-4-6

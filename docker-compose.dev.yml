@@ -18,8 +18,10 @@ services:
       - ./backend/.env   # your real CLIENT_ID/SECRET/GEMINI_API_KEY/SESSION_SECRET
     environment:
       - TZ=America/New_York
-      # Override so OAuth comes back to THIS origin (register it on the Spotify app too).
+      # DEV_AUTH bypasses OAuth, so REDIRECT_URI is unused — reach this at http://<lan-ip>:5471.
       - REDIRECT_URI=http://127.0.0.1:5471/callback
+      # Refresh-token login bypass for headless/LAN dev (DEV_REFRESH_TOKEN in backend/.env).
+      - DEV_AUTH=true
       - LOG_LEVEL=DEBUG
     volumes:
       - ./backend:/app/backend                          # backend live-reload via uvicorn --reload
