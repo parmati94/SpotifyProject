@@ -20,6 +20,8 @@ class PlaylistItem(BaseModel):
     total_tracks: int
     image_url: str
     recently_played: bool = False
+    # True for playlists this app made (daily/weekly/created-from) — drives the UI tabs.
+    created_by_app: bool = False
 
 
 class PlaylistsResponse(BaseModel):

@@ -7,7 +7,8 @@ resolved the "engine requested but no key" degrade-to-catalog decision.
 
 from __future__ import annotations
 
-from backend.common.config import Settings
+from backend.common.config import ENGINE_LABELS, Settings
+from backend.common.logging_config import logger
 from .base import Recommender
 from .catalog import CatalogRecommender
 
@@ -18,16 +19,28 @@ def build_recommender(settings: Settings, sp, engine: str | None = None) -> Reco
     # resolved — its key is guaranteed present for keyed engines.
     if engine is None:
         engine = settings.effective_recommender
+
     if engine == "lastfm":
         from .lastfm import LastfmRecommender
 
-        return LastfmRecommender(settings.lastfm_api_key)
-    if engine == "gemini":
+        recommender: Recommender = LastfmRecommender(settings.lastfm_api_key)
+    elif engine == "gemini":
         from .gemini import GeminiRecommender
 
-        return GeminiRecommender(settings.gemini_api_key, settings.gemini_model)
-    if engine == "claude":
+        recommender = GeminiRecommender(settings.gemini_api_key, settings.gemini_model)
+    elif engine == "claude":
         from .claude import ClaudeRecommender
 
-        return ClaudeRecommender(settings.anthropic_api_key, settings.claude_model)
-    return CatalogRecommender(sp)
+        recommender = ClaudeRecommender(settings.anthropic_api_key, settings.claude_model)
+    else:
+        recommender = CatalogRecommender(sp)
+
+    # Surface the active engine at INFO (model included for the LLM engines) so the
+    # logs always show which recommender served a build, not just its output.
+    model = {"gemini": settings.gemini_model, "claude": settings.claude_model}.get(engine)
+    logger.info(
+        "Recommender engine: %s%s",
+        ENGINE_LABELS.get(engine, engine),
+        f" ({model})" if model else "",
+    )
+    return recommender

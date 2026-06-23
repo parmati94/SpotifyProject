@@ -15,6 +15,23 @@
     </div>
   </div>
 
+  <!-- Tabs: Spotify-style filter chips. The active chip uses the app accent (matching the
+       playlist-card selection state); the others stay quiet until hovered. -->
+  <div x-show="playlists.length && !playlistsLoading" class="flex items-center gap-2 mb-5">
+    <template x-for="tab in [{ id: 'library', label: 'Your library' }, { id: 'app', label: 'Made here' }]" :key="tab.id">
+      <button @click="playlistTab = tab.id" type="button"
+              class="px-4 py-1.5 rounded-full text-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/60"
+              :class="playlistTab === tab.id
+                ? 'bg-accent-500 text-gray-950 font-semibold shadow-sm shadow-accent-500/30'
+                : 'bg-gray-800/80 text-gray-300 font-medium hover:bg-gray-700 hover:text-white'">
+        <span x-text="tab.label"></span>
+        <span class="ml-1 tabular-nums"
+              :class="playlistTab === tab.id ? 'text-gray-950/60' : 'text-gray-500'"
+              x-text="tabCount(tab.id)"></span>
+      </button>
+    </template>
+  </div>
+
   <!-- Loading skeleton -->
   <div x-show="playlistsLoading" class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
     <template x-for="i in 8" :key="i">
@@ -26,13 +43,21 @@
     </template>
   </div>
 
-  <!-- Empty -->
+  <!-- Empty: no playlists at all -->
   <div x-show="!playlistsLoading && !playlists.length" class="rounded-2xl border border-dashed border-gray-800 bg-gray-900/30 p-10 text-center text-gray-500">
     No playlists found in your library yet.
   </div>
 
+  <!-- Empty: have playlists, but none in the active tab / matching the search -->
+  <div x-show="!playlistsLoading && playlists.length && !filteredPlaylists().length"
+       class="rounded-2xl border border-dashed border-gray-800 bg-gray-900/30 p-10 text-center text-gray-500">
+    <span x-show="playlistSearch.trim()">No playlists match your search.</span>
+    <span x-show="!playlistSearch.trim() && playlistTab === 'app'">No app-made playlists yet — create a daily or weekly mix above.</span>
+    <span x-show="!playlistSearch.trim() && playlistTab === 'library'">No playlists in your library.</span>
+  </div>
+
   <!-- Grid -->
-  <div x-show="!playlistsLoading && playlists.length" class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+  <div x-show="!playlistsLoading && filteredPlaylists().length" class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
     <template x-for="p in filteredPlaylists()" :key="p.name">
       <div @click="selectSource(p.name, { scroll: true })" @keydown.enter="selectSource(p.name, { scroll: true })"
            role="button" tabindex="0" :title="`Use ${p.name} as the source`"

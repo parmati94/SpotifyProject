@@ -12,7 +12,7 @@ import os
 import random
 
 from backend.common.logging_config import logger
-from .recommender.base import Seed
+from .recommender.base import Seed, preview
 
 # How many seed tracks to feed the recommender. More seeds = broader taste coverage;
 # past ~50 it's diminishing returns + slower (one Last.fm call per seed). Env-tunable.
@@ -100,6 +100,7 @@ class SpotifyClient:
         random.shuffle(seeds)
         chosen = seeds[:limit]
         logger.info("Seeded from %d top tracks (%d available).", len(chosen), len(seeds))
+        logger.debug("Top-track seeds: %s", preview(chosen))
         return chosen
 
     def playlist_seeds(self, playlist_id: str, limit: int = _MAX_SEEDS) -> list[Seed]:
@@ -132,6 +133,7 @@ class SpotifyClient:
         n = min(limit, len(entries))
         chosen = _recency_weighted_sample([seed for seed, _ in entries], n)
         logger.info("Seeded from %d of %d playlist tracks (recency-weighted).", len(chosen), len(entries))
+        logger.debug("Playlist seeds (recency-weighted): %s", preview(chosen))
         return chosen
 
     # --- playlist reads ---

@@ -15,7 +15,7 @@ import time
 from pydantic import BaseModel
 
 from backend.common.logging_config import logger
-from .base import Recommender, RecommenderError, Seed, Suggestion
+from .base import Recommender, RecommenderError, Seed, Suggestion, preview
 
 # Over-request multiplier: ask for ~25% more than needed so resolver misses
 # (hallucinated songs, punctuation mismatches) still leave enough real tracks.
@@ -67,6 +67,11 @@ class GeminiRecommender(Recommender):
 
         ask = max(count, int(count * _OVER_REQUEST))
         prompt = self._build_prompt(seeds, ask)
+        logger.debug(
+            "Gemini: requesting %d suggestions (model=%s, temp=%s) from %d seeds: %s",
+            ask, self._model, self._temperature, len(seeds), preview(seeds),
+        )
+        logger.debug("Gemini prompt:\n%s", prompt)
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=list[_SuggestionSchema],
@@ -79,10 +84,17 @@ class GeminiRecommender(Recommender):
         client = self._get_client()
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
+                started = time.perf_counter()
                 response = client.models.generate_content(
                     model=self._model, contents=prompt, config=config
                 )
-                return self._parse(response)
+                suggestions = self._parse(response)
+                logger.debug(
+                    "Gemini: %d usable suggestions in %.2fs (attempt %d): %s",
+                    len(suggestions), time.perf_counter() - started, attempt,
+                    preview(suggestions),
+                )
+                return suggestions
             except Exception as exc:  # noqa: BLE001 — degrade, don't crash a playlist build
                 retryable = _is_retryable(exc)
                 logger.warning(

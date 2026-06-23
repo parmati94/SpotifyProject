@@ -38,6 +38,7 @@ def list_playlists(client: SpotifyClient = Depends(get_client)) -> PlaylistsResp
                     total_tracks=p["tracks"]["total"],
                     image_url=images[0]["url"] if images else DEFAULT_IMAGE_URL,
                     recently_played=p.get("id") in recent_rank,
+                    created_by_app=playlist_ops.is_app_created(p["name"], p.get("description")),
                 )
             )
         except (KeyError, TypeError) as exc:

@@ -29,9 +29,11 @@ ENGINE_LABELS = {
 
 
 class Settings(BaseSettings):
-    # Environment variables take precedence; either .env location is read if present.
+    # Environment variables take precedence. The project-root `.env` is the canonical
+    # location; `backend/.env` is still read as a legacy fallback. Later entries win, so
+    # root overrides backend if both somehow exist.
     model_config = SettingsConfigDict(
-        env_file=(_ROOT / ".env", _PKG / ".env"),
+        env_file=(_PKG / ".env", _ROOT / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
