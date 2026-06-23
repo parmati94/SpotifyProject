@@ -102,6 +102,17 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Local credential scratch files (never commit)
+.gemini-api
+.spotify-api
+
+# Personal local-deploy compose (real domain + secrets) — never commit
+docker-compose.local.yml
+docker-compose.local.dev.yml
+
+# Resolver URI cache (runtime artifact)
+backend/.cache/
+
 # Environments
 .env
 .venv

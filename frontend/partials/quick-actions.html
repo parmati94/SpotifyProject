@@ -1,0 +1,45 @@
+<!-- Three one-tap actions. Buttons share the global actionLoading mutex; the one
+     that's running shows a spinner via `busy`. -->
+<section class="grid gap-4 sm:grid-cols-3">
+  <!-- Create daily -->
+  <div class="flex flex-col rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
+    <div class="grid place-items-center w-10 h-10 rounded-xl bg-accent-500/15 text-accent-400 mb-4">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    </div>
+    <h3 class="font-semibold text-white">Daily mix</h3>
+    <p class="text-sm text-gray-400 mt-1 flex-1">A fresh playlist seeded from your recent top tracks, named for today.</p>
+    <button @click="createDaily()" :disabled="actionLoading"
+            class="mt-4 inline-flex items-center justify-center gap-2 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 font-medium rounded-lg px-4 py-2.5 transition-colors">
+      <svg x-show="busy === 'daily'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+      <span x-text="busy === 'daily' ? 'Working…' : 'Create daily'"></span>
+    </button>
+  </div>
+
+  <!-- Extend weekly -->
+  <div class="flex flex-col rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
+    <div class="grid place-items-center w-10 h-10 rounded-xl bg-accent-500/15 text-accent-400 mb-4">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m-4-4h8M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <h3 class="font-semibold text-white">Weekly playlist</h3>
+    <p class="text-sm text-gray-400 mt-1 flex-1">Grow your rolling "Weekly Extended Playlist" with new picks (created if needed).</p>
+    <button @click="extendWeekly()" :disabled="actionLoading"
+            class="mt-4 inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg px-4 py-2.5 border border-gray-700 transition-colors">
+      <svg x-show="busy === 'weekly'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+      <span x-text="busy === 'weekly' ? 'Working…' : 'Add to weekly'"></span>
+    </button>
+  </div>
+
+  <!-- Delete daily -->
+  <div class="flex flex-col rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
+    <div class="grid place-items-center w-10 h-10 rounded-xl bg-danger-500/15 text-danger-400 mb-4">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+    </div>
+    <h3 class="font-semibold text-white">Clear today</h3>
+    <p class="text-sm text-gray-400 mt-1 flex-1">Delete every playlist named after today's date — handy for a re-roll.</p>
+    <button @click="deleteDaily()" :disabled="actionLoading"
+            class="mt-4 inline-flex items-center justify-center gap-2 bg-transparent hover:bg-danger-500/10 disabled:opacity-50 disabled:cursor-not-allowed text-danger-300 font-medium rounded-lg px-4 py-2.5 border border-danger-800/70 transition-colors">
+      <svg x-show="busy === 'delete'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+      <span x-text="busy === 'delete' ? 'Working…' : 'Delete daily'"></span>
+    </button>
+  </div>
+</section>

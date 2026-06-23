@@ -1,0 +1,15 @@
+<!-- Global action-result toast. Success auto-dismisses (unless sticky "working…"
+     toasts); errors stay until dismissed — see the actionResult $watch in app.js. -->
+<div x-show="actionResult" x-transition x-cloak
+     class="fixed top-20 left-1/2 -translate-x-1/2 z-[1200] w-[calc(100%-1.5rem)] max-w-md">
+  <div :class="actionResult?.ok ? 'bg-ok-900/90 border-ok-700 text-ok-100' : 'bg-danger-900/90 border-danger-700 text-danger-100'"
+       class="flex items-start justify-between gap-3 px-3.5 py-3 border rounded-xl text-sm shadow-xl backdrop-blur-md">
+    <div class="flex items-start gap-2 min-w-0">
+      <svg x-show="actionResult?.ok && !actionResult?.sticky" class="flex-shrink-0 mt-0.5 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <svg x-show="actionResult?.ok && actionResult?.sticky" class="flex-shrink-0 mt-0.5 w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+      <svg x-show="!actionResult?.ok" class="flex-shrink-0 mt-0.5 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <span class="min-w-0 break-words" x-text="actionResult?.message"></span>
+    </div>
+    <button @click="actionResult = null" aria-label="Dismiss" class="text-current opacity-60 hover:opacity-100 flex-shrink-0">✕</button>
+  </div>
+</div>

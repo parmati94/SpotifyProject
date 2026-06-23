@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Accent theme palettes ────────────────────────────────────────────────
+   Each accent-* Tailwind utility resolves to these CSS vars (see
+   tailwind.config.js). Values are space-separated `R G B` triplets so Tailwind
+   can apply <alpha-value>. `:root` is the default (Spotify green); setting
+   data-theme on <html> swaps the whole accent in one shot. */
+:root, [data-theme="spotify"] {
+  --accent-50: 230 250 237;  --accent-100: 198 244 214; --accent-200: 152 235 180;
+  --accent-300: 90 222 140;  --accent-400: 45 215 110;  --accent-500: 29 185 84;
+  --accent-600: 25 160 73;   --accent-700: 21 130 60;   --accent-800: 17 100 47;
+  --accent-900: 14 75 37;
+}
+[data-theme="violet"] {
+  --accent-50: 245 243 255;  --accent-100: 237 233 254; --accent-200: 221 214 254;
+  --accent-300: 196 181 253; --accent-400: 167 139 250; --accent-500: 139 92 246;
+  --accent-600: 124 58 237;  --accent-700: 109 40 217;  --accent-800: 91 33 182;
+  --accent-900: 76 29 149;
+}
+[data-theme="blue"] {
+  --accent-50: 239 246 255;  --accent-100: 219 234 254; --accent-200: 191 219 254;
+  --accent-300: 147 197 253; --accent-400: 96 165 250;  --accent-500: 59 130 246;
+  --accent-600: 37 99 235;   --accent-700: 29 78 216;   --accent-800: 30 64 175;
+  --accent-900: 30 58 138;
+}
+[data-theme="amber"] {
+  --accent-50: 255 251 235;  --accent-100: 254 243 199; --accent-200: 253 230 138;
+  --accent-300: 252 211 77;  --accent-400: 251 191 36;  --accent-500: 245 158 11;
+  --accent-600: 217 119 6;   --accent-700: 180 83 9;    --accent-800: 146 64 14;
+  --accent-900: 120 53 15;
+}
+[data-theme="rose"] {
+  --accent-50: 255 241 242;  --accent-100: 255 228 230; --accent-200: 254 205 211;
+  --accent-300: 253 164 175; --accent-400: 251 113 133; --accent-500: 244 63 94;
+  --accent-600: 225 29 72;   --accent-700: 190 18 60;   --accent-800: 159 18 57;
+  --accent-900: 136 19 55;
+}
+
+/* ── Semantic feedback palette (fixed, theme-independent) ──────────────────
+   ok = success, warn = attention, danger = error. Mirrors Tailwind green/amber/red. */
+:root {
+  --ok-50: 240 253 244;  --ok-100: 220 252 231; --ok-200: 187 247 208;
+  --ok-300: 134 239 172; --ok-400: 74 222 128;  --ok-500: 34 197 94;
+  --ok-600: 22 163 74;   --ok-700: 21 128 61;   --ok-800: 22 101 52;  --ok-900: 20 83 45;
+
+  --warn-50: 255 251 235;  --warn-100: 254 243 199; --warn-200: 253 230 138;
+  --warn-300: 252 211 77;  --warn-400: 251 191 36;  --warn-500: 245 158 11;
+  --warn-600: 217 119 6;   --warn-700: 180 83 9;    --warn-800: 146 64 14;  --warn-900: 120 53 15;
+
+  --danger-50: 254 242 242;  --danger-100: 254 226 226; --danger-200: 254 202 202;
+  --danger-300: 252 165 165; --danger-400: 248 113 113; --danger-500: 239 68 68;
+  --danger-600: 220 38 38;   --danger-700: 185 28 28;   --danger-800: 153 27 27;  --danger-900: 127 29 29;
+}
+
+[x-cloak] { display: none !important; }
+
+/* Subtle dark-themed scrollbars to match the UI. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(71, 85, 105, 0.7) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(71, 85, 105, 0.7);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background-color: rgba(100, 116, 139, 0.9); }
+
+/* Ambient accent glow used behind the hero / header wordmark. */
+.accent-glow {
+  background: radial-gradient(60% 60% at 50% 0%, rgb(var(--accent-500) / 0.16), transparent 70%);
+}

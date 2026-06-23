@@ -1,0 +1,46 @@
+<!-- Build a brand-new playlist seeded from one of the user's existing playlists. -->
+<section id="create-from-playlist" class="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+  <div class="flex items-center gap-2.5 mb-1">
+    <svg class="w-5 h-5 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    <h2 class="font-display text-lg font-bold">Create from a playlist</h2>
+  </div>
+  <p class="text-sm text-gray-400 mb-5">Pick a playlist to seed from, name the new one, and choose how many songs to generate.</p>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <!-- Source -->
+    <label class="block">
+      <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">Seed from</span>
+      <select x-model="createForm.source"
+              class="mt-1.5 w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500">
+        <option value="" disabled>Select a playlist…</option>
+        <template x-for="p in playlists" :key="p.name">
+          <option :value="p.name" x-text="`${p.name} (${p.total_tracks})`"></option>
+        </template>
+      </select>
+    </label>
+
+    <!-- Target name -->
+    <label class="block">
+      <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">New playlist name</span>
+      <input x-model="createForm.target" type="text" placeholder="e.g. Discovery Mix"
+             class="mt-1.5 w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2.5 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500" />
+    </label>
+  </div>
+
+  <!-- Count slider -->
+  <div class="mt-5">
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">Songs</span>
+      <span class="text-sm font-semibold text-accent-400" x-text="createForm.count"></span>
+    </div>
+    <input x-model.number="createForm.count" type="range" min="20" max="200" step="10"
+           class="mt-2 w-full accent-accent-500" />
+    <div class="flex justify-between text-[11px] text-gray-600 mt-1"><span>20</span><span>200</span></div>
+  </div>
+
+  <button @click="createFromPlaylist()" :disabled="actionLoading"
+          class="mt-6 inline-flex items-center justify-center gap-2 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-950 font-medium rounded-lg px-5 py-2.5 transition-colors">
+    <svg x-show="busy === 'from'" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+    <span x-text="busy === 'from' ? 'Building…' : 'Create playlist'"></span>
+  </button>
+</section>

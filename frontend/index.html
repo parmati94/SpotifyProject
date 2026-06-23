@@ -1,0 +1,22 @@
+{{> head }}
+{{> header }}
+
+<!-- Initial session probe -->
+<div x-show="checking" class="flex-1 grid place-items-center">
+  <svg class="w-8 h-8 animate-spin text-accent-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+</div>
+
+<!-- Not connected -->
+{{> auth-gate }}
+
+<!-- Connected: the dashboard -->
+<main x-show="!checking && authenticated" class="flex-1 container mx-auto max-w-5xl px-4 py-8 space-y-8">
+  {{> quick-actions }}
+  {{> create-from-playlist }}
+  {{> playlist-browser }}
+</main>
+
+{{> settings }}
+{{> toast }}
+{{> confirm-dialog }}
+{{> footer }}
