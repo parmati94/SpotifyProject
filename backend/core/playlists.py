@@ -37,9 +37,15 @@ def _recommend_uris(
     """seeds → recommender → resolve → dedupe → shuffle → slice to `count`."""
     if not seeds:
         return []
+    logger.debug(
+        "Build pipeline: %d seeds, requesting %d tracks (excluding %d existing)",
+        len(seeds), count, len(exclude_uris or ()),
+    )
     suggestions = recommender.recommend(seeds, count)
+    logger.debug("Build pipeline: recommender returned %d suggestions; resolving", len(suggestions))
     uris = resolve_all(client.sp, suggestions, limit=count, exclude_uris=exclude_uris)
     random.shuffle(uris)
+    logger.debug("Build pipeline: %d playable tracks after resolve/dedupe/slice", len(uris))
     return uris
 
 

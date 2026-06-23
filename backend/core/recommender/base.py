@@ -13,6 +13,15 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 
+def preview(items, limit: int = 10) -> str:
+    """Compact 'Title — Artist, ...' rendering of seeds/suggestions for DEBUG logs,
+    truncated to `limit` with a '(+N more)' tail so big lists stay one readable line.
+    Works for anything with .title/.artist (both Seed and Suggestion)."""
+    shown = ", ".join(f"{i.title} — {i.artist}" for i in items[:limit])
+    extra = len(items) - limit
+    return f"{shown} (+{extra} more)" if extra > 0 else (shown or "(none)")
+
+
 class RecommenderError(RuntimeError):
     """An engine failed hard (auth, exhausted credits, rate limit, network) after its
     own retries. Distinct from "no results" — surfaced to the user with the cause,

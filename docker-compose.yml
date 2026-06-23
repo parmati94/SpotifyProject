@@ -6,10 +6,10 @@ services:
     container_name: spotifyproject
     ports:
       - "5470:80"
-    # Secrets live in backend/.env (gitignored); see backend/.env.example.
+    # Secrets live in ./.env at the project root (gitignored); see .env.example.
     # Convention: credentials in .env, non-secret config inline below.
     env_file:
-      - ./backend/.env   # CLIENT_ID, CLIENT_SECRET, SESSION_SECRET, GEMINI_API_KEY
+      - ./.env   # CLIENT_ID, CLIENT_SECRET, SESSION_SECRET, GEMINI_API_KEY
     environment:
       - TZ=America/New_York
       # Must EXACTLY match a Redirect URI registered on the Spotify app AND the

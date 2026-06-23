@@ -41,12 +41,13 @@ is same-origin, so there's no CORS and the OAuth redirect targets one URL.
 
 ## Configuration
 
-Config is split by sensitivity: **secrets live in `backend/.env`** (gitignored, secrets-only),
-**non-secret config lives in `docker-compose*.yml`** (committed, reviewable). Compose pulls the
-secrets via `env_file` and sets the non-secrets inline; `backend/common/config.py` holds sane
-defaults as a fallback. Copy `backend/.env.example` to `backend/.env` to start.
+Config is split by sensitivity: **secrets live in `./.env`** at the project root (gitignored,
+secrets-only), **non-secret config lives in `docker-compose*.yml`** (committed, reviewable).
+Compose pulls the secrets via `env_file` and sets the non-secrets inline; `backend/common/config.py`
+holds sane defaults as a fallback. Copy `.env.example` to `./.env` to start. (A legacy
+`backend/.env` is still read if present, but the root `.env` is the canonical location.)
 
-**Secrets — in `backend/.env`:**
+**Secrets — in `./.env`:**
 
 | Variable | Required | Notes |
 |----------|----------|-------|

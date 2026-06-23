@@ -15,12 +15,12 @@ services:
     ports:
       - "5471:80"
     env_file:
-      - ./backend/.env   # your real CLIENT_ID/SECRET/GEMINI_API_KEY/SESSION_SECRET
+      - ./.env   # your real CLIENT_ID/SECRET/GEMINI_API_KEY/SESSION_SECRET
     environment:
       - TZ=America/New_York
       # DEV_AUTH bypasses OAuth, so REDIRECT_URI is unused — reach this at http://<lan-ip>:5471.
       - REDIRECT_URI=http://127.0.0.1:5471/callback
-      # Refresh-token login bypass for headless/LAN dev (DEV_REFRESH_TOKEN in backend/.env).
+      # Refresh-token login bypass for headless/LAN dev (DEV_REFRESH_TOKEN in ./.env).
       - DEV_AUTH=true
       - LOG_LEVEL=DEBUG
     volumes:

@@ -14,7 +14,7 @@ from __future__ import annotations
 import random
 
 from backend.common.logging_config import logger
-from .base import Recommender, Seed, Suggestion
+from .base import Recommender, Seed, Suggestion, preview
 
 
 class CatalogRecommender(Recommender):
@@ -56,8 +56,11 @@ class CatalogRecommender(Recommender):
         for artist_name in {s.artist for s in seeds}:  # dedupe seed artists
             artist_id = self._artist_id(artist_name)
             if artist_id is None:
+                logger.debug("Catalog: no Spotify artist match for %r", artist_name)
                 continue
-            for suggestion in self._top_tracks(artist_id):
+            tracks = self._top_tracks(artist_id)
+            logger.debug("Catalog: %d top tracks for artist %r", len(tracks), artist_name)
+            for suggestion in tracks:
                 key = (suggestion.title.lower(), suggestion.artist.lower())
                 if key not in seen:
                     seen.add(key)
@@ -65,5 +68,6 @@ class CatalogRecommender(Recommender):
 
         random.shuffle(candidates)
         logger.info("Catalog recommender produced %d candidates.", len(candidates))
+        logger.debug("Catalog candidates (shuffled): %s", preview(candidates))
         # Over-return a little; the resolver/pipeline slices to the final count.
         return candidates[: max(count * 2, count)]

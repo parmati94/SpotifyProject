@@ -1,54 +1,103 @@
+"""Logging configuration — colored console (colorlog) + daily rotating file.
+
+Matches the palworld-lens convention: a single `setup_logging()` that configures the
+root logger with colored levels for the console, plus `get_logger()` for named loggers.
+The module-level `logger` is kept and configured on import, so existing
+`from backend.common.logging_config import logger` call sites keep working unchanged.
+"""
+
+import datetime
 import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
-import datetime
 
-class CustomTimedRotatingFileHandler(TimedRotatingFileHandler):
+import colorlog
+
+# logs live next to this module: backend/common/logs/
+_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+
+# Console keeps the colored level; file stays plain text. Both retain %(filename)s so
+# the originating source file is visible (all modules share the root logger, so a logger
+# name would be constant and useless — the filename is what tells them apart).
+_CONSOLE_FORMAT = "%(log_color)s%(levelname)-8s%(reset)s %(asctime)s %(filename)s: %(message)s"
+_FILE_FORMAT = "%(asctime)s [%(levelname)s] %(filename)s: %(message)s"
+_DATEFMT = "%Y-%m-%d %H:%M:%S"
+_LOG_COLORS = {
+    "DEBUG": "cyan",
+    "INFO": "green",
+    "WARNING": "yellow",
+    "ERROR": "red",
+    "CRITICAL": "red,bg_white",
+}
+# Chatty third-party loggers pinned to WARNING so our own logs stay readable.
+_NOISY = ("httpx", "httpcore", "google_genai", "google.genai", "urllib3", "spotipy")
+
+
+class _DailyRotatingFileHandler(TimedRotatingFileHandler):
+    """Roll at midnight, naming each file logfile_YYYY-MM-DD.log."""
+
     def doRollover(self):
-        self.baseFilename = os.path.join(log_dir, f"logfile_{datetime.datetime.now().strftime('%Y-%m-%d')}.log")
-        TimedRotatingFileHandler.doRollover(self)
+        self.baseFilename = os.path.join(
+            _LOG_DIR, f"logfile_{datetime.datetime.now():%Y-%m-%d}.log"
+        )
+        super().doRollover()
 
-log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
-numeric_level = getattr(logging, log_level, None)
 
-if not isinstance(numeric_level, int):
-    raise ValueError(f'Invalid log level: {log_level}')
+def _coerce_level(level: str | int | None) -> int:
+    if level is None:
+        level = os.getenv("LOG_LEVEL", "INFO").upper()
+    if isinstance(level, int):
+        return level
+    numeric = getattr(logging, level, None)
+    if not isinstance(numeric, int):
+        raise ValueError(f"Invalid log level: {level}")
+    return numeric
 
-log_format = '%(asctime)s [%(levelname)s] %(filename)s: %(message)s'
 
-# Get the directory of the current script
-script_dir = os.path.dirname(os.path.abspath(__file__))
+def setup_logging(level: str | int | None = None) -> logging.Logger:
+    """Configure the root logger: colored console + daily rotating file. Idempotent —
+    existing handlers are cleared first, so it is safe to call more than once."""
+    numeric_level = _coerce_level(level)
 
-# Join it with 'logs' to get the path to the logs directory
-log_dir = os.path.join(script_dir, 'logs')
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        root.removeHandler(handler)
 
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
+    console = colorlog.StreamHandler()
+    console.setFormatter(
+        colorlog.ColoredFormatter(
+            _CONSOLE_FORMAT, datefmt=_DATEFMT, reset=True, log_colors=_LOG_COLORS
+        )
+    )
 
-# Create a timed rotating file handler that creates a new file every day and keeps logs for a week
-# The log files are named with the current date
-file_handler = CustomTimedRotatingFileHandler(os.path.join(log_dir, f"logfile_{datetime.datetime.now().strftime('%Y-%m-%d')}.log"), when='midnight', interval=1, backupCount=7)
-file_handler.setLevel(numeric_level)
+    os.makedirs(_LOG_DIR, exist_ok=True)
+    file_handler = _DailyRotatingFileHandler(
+        os.path.join(_LOG_DIR, f"logfile_{datetime.datetime.now():%Y-%m-%d}.log"),
+        when="midnight",
+        interval=1,
+        backupCount=7,
+    )
+    file_handler.setFormatter(logging.Formatter(_FILE_FORMAT, datefmt=_DATEFMT))
 
-# Create a console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(numeric_level)
+    for handler in (console, file_handler):
+        handler.setLevel(numeric_level)
+        root.addHandler(handler)
+    root.setLevel(numeric_level)
 
-# Create a formatter and set it for both handlers
-formatter = logging.Formatter(log_format, datefmt='%Y-%m-%d %H:%M:%S')
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
+    for noisy in _NOISY:
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
-# Get the root logger and set its level
+    root.info("Logging configured at %s", logging.getLevelName(numeric_level))
+    return root
+
+
+def get_logger(name: str) -> logging.Logger:
+    """A named logger (palworld-lens parity). All loggers propagate to the root handlers
+    configured by setup_logging()."""
+    return logging.getLogger(name)
+
+
+# Configure on import and export a default logger so existing
+# `from backend.common.logging_config import logger` imports keep working.
+setup_logging()
 logger = logging.getLogger()
-logger.setLevel(numeric_level)
-
-print(f"Log level set to: {logging.getLevelName(logger.level)}")
-
-# Quiet chatty third-party libraries so our own logs stay readable.
-for _noisy in ("httpx", "httpcore", "google_genai", "google.genai", "urllib3", "spotipy"):
-    logging.getLogger(_noisy).setLevel(logging.WARNING)
-
-# Add both handlers to the root logger
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)

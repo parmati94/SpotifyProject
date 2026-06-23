@@ -67,6 +67,7 @@ class ResolverCache:
                 tmp.write_text(json.dumps(self._data))
                 tmp.replace(self._path)  # atomic
                 self._dirty = False
+                logger.debug("Resolver cache flushed (%d entries total).", len(self._data))
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Resolver cache save failed: %s", exc)
 

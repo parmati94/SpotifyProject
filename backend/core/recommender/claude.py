@@ -9,10 +9,12 @@ anything is added.
 
 from __future__ import annotations
 
+import time
+
 from pydantic import BaseModel
 
 from backend.common.logging_config import logger
-from .base import Recommender, RecommenderError, Seed, Suggestion
+from .base import Recommender, RecommenderError, Seed, Suggestion, preview
 
 _OVER_REQUEST = 1.25  # ask for ~25% more than needed to absorb resolver misses
 _MAX_TOKENS = 8000    # enough for a few hundred {title, artist} pairs
@@ -59,11 +61,18 @@ class ClaudeRecommender(Recommender):
             return []
 
         ask = max(count, int(count * _OVER_REQUEST))
+        prompt = self._build_prompt(seeds, ask)
+        logger.debug(
+            "Claude: requesting %d suggestions (model=%s) from %d seeds: %s",
+            ask, self._model, len(seeds), preview(seeds),
+        )
+        logger.debug("Claude prompt:\n%s", prompt)
         try:
+            started = time.perf_counter()
             response = self._get_client().messages.parse(
                 model=self._model,
                 max_tokens=self._max_tokens,
-                messages=[{"role": "user", "content": self._build_prompt(seeds, ask)}],
+                messages=[{"role": "user", "content": prompt}],
                 output_format=_SuggestionList,
             )
         except Exception as exc:  # noqa: BLE001 — surface the cause (credits/auth/rate limit)
@@ -80,4 +89,8 @@ class ClaudeRecommender(Recommender):
             artist = (item.artist or "").strip()
             if title and artist:
                 out.append(Suggestion(title=title, artist=artist))
+        logger.debug(
+            "Claude: %d usable suggestions (of %d raw) in %.2fs: %s",
+            len(out), len(parsed.songs), time.perf_counter() - started, preview(out),
+        )
         return out

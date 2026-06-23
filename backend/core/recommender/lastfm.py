@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 
 from backend.common.logging_config import logger
-from .base import Recommender, Seed, Suggestion
+from .base import Recommender, Seed, Suggestion, preview
 
 _API = "https://ws.audioscrobbler.com/2.0/"
 _WORKERS = max(1, int(os.getenv("LASTFM_WORKERS", "5")))
@@ -48,11 +48,19 @@ class LastfmRecommender(Recommender):
         )
         out = _parse_similar_tracks(data)
         if out:
+            logger.debug(
+                "Last.fm: %d similar tracks for seed %s — %s", len(out), seed.title, seed.artist
+            )
             return out
         # Fallback: the seed track wasn't found / had no neighbours — surface more of
         # the same artist so the seed still contributes something.
         top = self._get("artist.gettoptracks", artist=seed.artist, limit=10)
-        return _parse_top_tracks(top)
+        fallback = _parse_top_tracks(top)
+        logger.debug(
+            "Last.fm: no neighbours for seed %s — %s; fell back to %d artist top tracks",
+            seed.title, seed.artist, len(fallback),
+        )
+        return fallback
 
     def recommend(self, seeds: list[Seed], count: int) -> list[Suggestion]:
         if not seeds or count <= 0:
@@ -79,6 +87,9 @@ class LastfmRecommender(Recommender):
         ask = max(count, int(count * _OVER_REQUEST))
         out = ranked[:ask]
         logger.info("Last.fm produced %d candidates from %d seeds.", len(out), len(seeds))
+        logger.debug(
+            "Last.fm top candidates (by aggregate match score): %s", preview(out)
+        )
         return out
 
 

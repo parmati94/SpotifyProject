@@ -45,11 +45,13 @@ export function playlistActions() {
 
     // ── Actions ────────────────────────────────────────────────────────────
     async createDaily() {
-      await this._runAction('daily', api.createDaily, 'Building your daily mix…');
+      await this._runAction('daily', api.createDaily, 'Building your daily mix…',
+        () => this.loadPlaylists());  // reflect the new playlist in the browser
     },
 
     async extendWeekly() {
-      await this._runAction('weekly', api.extendWeekly, 'Extending your weekly playlist…');
+      await this._runAction('weekly', api.extendWeekly, 'Extending your weekly playlist…',
+        () => this.loadPlaylists());  // weekly may have just been created
     },
 
     async deleteDaily() {
@@ -60,7 +62,8 @@ export function playlistActions() {
         danger: true,
       });
       if (!ok) return;
-      await this._runAction('delete', api.deleteDaily, 'Deleting daily playlists…');
+      await this._runAction('delete', api.deleteDaily, 'Deleting daily playlists…',
+        () => this.loadPlaylists());  // drop the deleted playlists from the browser
     },
 
     async createFromPlaylist() {
