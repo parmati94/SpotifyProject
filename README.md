@@ -1,5 +1,7 @@
 # SpotifyProject
 
+![SpotifyProject — generate daily/weekly playlists and build from any playlist, with AI recommendations](docs/screenshot.png)
+
 AI-generated Spotify playlists. Connect your account and the app builds fresh playlists
 from your listening — a daily mix, a rolling weekly playlist, or a new playlist seeded from
 any of your existing ones. Song suggestions come from **Google Gemini**; every suggestion is
