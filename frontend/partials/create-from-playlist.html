@@ -7,23 +7,55 @@
   <p class="text-sm text-gray-400 mb-5">Pick a playlist to seed from, name the new one, and choose how many songs to generate.</p>
 
   <div class="grid gap-4 sm:grid-cols-2">
-    <!-- Source -->
-    <label class="block">
+    <!-- Source: custom searchable dropdown (kept in sync with the grid below) -->
+    <div class="block">
       <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">Seed from</span>
-      <select x-model="createForm.source"
-              class="mt-1.5 w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500">
-        <option value="" disabled>Select a playlist…</option>
-        <template x-for="p in playlists" :key="p.name">
-          <option :value="p.name" x-text="`${p.name} (${p.total_tracks})`"></option>
-        </template>
-      </select>
-    </label>
+      <div class="relative mt-1.5" @click.outside="sourceDropdownOpen = false" @keydown.escape.window="sourceDropdownOpen = false">
+        <!-- Fixed-height trigger (matches the name input's h-12). Art when selected, no
+             placeholder icon. -->
+        <button type="button" @click="sourceDropdownOpen = !sourceDropdownOpen"
+                class="w-full flex items-center gap-2.5 bg-gray-950 border rounded-lg px-3 h-12 text-sm text-left transition-colors"
+                :class="sourceDropdownOpen ? 'border-accent-500 ring-2 ring-accent-500/50' : 'border-gray-700 hover:border-gray-600'">
+          <img x-show="selectedSourcePlaylist()" :src="selectedSourcePlaylist()?.image_url" alt=""
+               class="w-8 h-8 rounded object-cover flex-shrink-0" />
+          <span class="flex-1 min-w-0 truncate" :class="selectedSourcePlaylist() ? 'text-white' : 'text-gray-500'"
+                x-text="selectedSourcePlaylist()?.name || 'Select a playlist…'"></span>
+          <svg class="w-4 h-4 text-gray-500 flex-shrink-0 transition-transform" :class="sourceDropdownOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+
+        <div x-show="sourceDropdownOpen" x-transition.opacity.duration.100ms x-cloak
+             class="absolute z-30 mt-1 w-full rounded-lg border border-gray-700 bg-gray-900 shadow-2xl overflow-hidden">
+          <div class="p-2 border-b border-gray-800">
+            <input x-model="sourceSearch" type="text" placeholder="Search playlists…" @click.stop
+                   class="w-full bg-gray-950 border border-gray-700 rounded-md px-3 py-1.5 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-accent-500" />
+          </div>
+          <div class="max-h-64 overflow-y-auto py-1">
+            <template x-for="p in sourceOptions()" :key="p.name">
+              <button type="button" @click="selectSource(p.name)"
+                      class="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-left hover:bg-gray-800 transition-colors"
+                      :class="createForm.source === p.name ? 'bg-accent-500/10' : ''">
+                <img :src="p.image_url" alt="" loading="lazy" class="w-8 h-8 rounded object-cover flex-shrink-0" />
+                <span class="flex-1 min-w-0">
+                  <span class="flex items-center gap-1.5">
+                    <span class="truncate text-sm text-white" x-text="p.name"></span>
+                    <span x-show="p.recently_played" class="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-accent-400" title="Recently played"></span>
+                  </span>
+                  <span class="block text-xs text-gray-500" x-text="`${p.total_tracks} tracks`"></span>
+                </span>
+                <svg x-show="createForm.source === p.name" class="w-4 h-4 text-accent-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              </button>
+            </template>
+            <div x-show="!sourceOptions().length" class="px-3 py-4 text-center text-sm text-gray-600">No matches</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Target name -->
     <label class="block">
       <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">New playlist name</span>
       <input x-model="createForm.target" type="text" placeholder="e.g. Discovery Mix"
-             class="mt-1.5 w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2.5 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500" />
+             class="mt-1.5 w-full bg-gray-950 border border-gray-700 rounded-lg px-3 h-12 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500" />
     </label>
   </div>
 

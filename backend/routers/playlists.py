@@ -22,8 +22,14 @@ router = APIRouter(prefix="/api/playlists", tags=["playlists"])
 
 @router.get("", response_model=PlaylistsResponse)
 def list_playlists(client: SpotifyClient = Depends(get_client)) -> PlaylistsResponse:
+    playlists = client.all_playlists()
+    # Float recently-played playlists to the top (in recency order); the rest keep their
+    # original order. Stable sort + a large rank for non-recent ones does both.
+    recent_rank = {pid: i for i, pid in enumerate(client.recently_played_playlist_ids())}
+    playlists.sort(key=lambda p: recent_rank.get(p.get("id"), len(recent_rank) + 1))
+
     items: list[PlaylistItem] = []
-    for p in client.all_playlists():
+    for p in playlists:
         try:
             images = p.get("images") or []
             items.append(
@@ -31,6 +37,7 @@ def list_playlists(client: SpotifyClient = Depends(get_client)) -> PlaylistsResp
                     name=p["name"],
                     total_tracks=p["tracks"]["total"],
                     image_url=images[0]["url"] if images else DEFAULT_IMAGE_URL,
+                    recently_played=p.get("id") in recent_rank,
                 )
             )
         except (KeyError, TypeError) as exc:

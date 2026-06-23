@@ -58,6 +58,29 @@ class SpotifyClient:
     def current_user_id(self) -> str:
         return self.sp.me()["id"]
 
+    def recently_played_playlist_ids(self) -> list[str]:
+        """Distinct playlist ids the user played recently, most-recent first.
+
+        Spotify has no "last played per playlist", but recently-played *tracks* carry a
+        `context` — when you play a playlist, that context is the playlist. We dedupe those
+        contexts in recency order. Covers only the last ~50 tracks and only plays that had a
+        playlist context (not Liked-Songs shuffle, albums, or queue plays)."""
+        try:
+            res = self.sp.current_user_recently_played(limit=50)
+        except Exception as exc:  # noqa: BLE001 — best-effort ordering, never fatal
+            logger.warning("recently_played lookup failed: %s", exc)
+            return []
+        ordered: list[str] = []
+        seen: set[str] = set()
+        for item in res.get("items", []):
+            ctx = item.get("context") or {}
+            if ctx.get("type") == "playlist":
+                pid = (ctx.get("uri") or "").split(":")[-1]
+                if pid and pid not in seen:
+                    seen.add(pid)
+                    ordered.append(pid)
+        return ordered
+
     # --- seeds ---
     def top_track_seeds(self, limit: int = _MAX_SEEDS) -> list[Seed]:
         """Seeds blended across all listening windows (recent + enduring), deduped and

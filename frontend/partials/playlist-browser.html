@@ -1,5 +1,6 @@
-<!-- The user's playlists as a searchable card grid. "Use as source" fills the
-     create form above. -->
+<!-- The user's playlists as a searchable card grid, recently-played first.
+     Clicking a card selects it as the "create from a playlist" source (synced with
+     the dropdown above). -->
 <section>
   <div class="flex items-center justify-between gap-3 mb-4">
     <div class="flex items-baseline gap-2.5">
@@ -33,16 +34,27 @@
   <!-- Grid -->
   <div x-show="!playlistsLoading && playlists.length" class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
     <template x-for="p in filteredPlaylists()" :key="p.name">
-      <div class="group relative rounded-xl border border-gray-800 bg-gray-900/60 p-3 hover:border-gray-700 hover:bg-gray-900 transition-colors">
+      <div @click="selectSource(p.name, { scroll: true })" @keydown.enter="selectSource(p.name, { scroll: true })"
+           role="button" tabindex="0" :title="`Use ${p.name} as the source`"
+           class="group relative rounded-xl border bg-gray-900/60 p-3 cursor-pointer transition-colors focus:outline-none"
+           :class="createForm.source === p.name
+             ? 'border-accent-500 ring-2 ring-accent-500/50 bg-gray-900'
+             : 'border-gray-800 hover:border-gray-700 hover:bg-gray-900'">
         <div class="aspect-square rounded-lg overflow-hidden bg-gray-800">
           <img :src="p.image_url" :alt="p.name" loading="lazy" class="w-full h-full object-cover" />
         </div>
+        <!-- Recently-played badge -->
+        <span x-show="p.recently_played"
+              class="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-gray-950/80 backdrop-blur-sm border border-accent-700/50 px-2 py-0.5 text-[10px] font-medium text-accent-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent-400"></span> Recent
+        </span>
+        <!-- Selected check -->
+        <span x-show="createForm.source === p.name"
+              class="absolute top-2 right-2 grid place-items-center w-7 h-7 rounded-lg bg-accent-500 text-gray-950 shadow-lg">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+        </span>
         <p class="mt-2.5 text-sm font-medium text-white truncate" x-text="p.name" :title="p.name"></p>
         <p class="text-xs text-gray-500" x-text="`${p.total_tracks} tracks`"></p>
-        <button @click="useAsSource(p.name)" title="Use as seed for a new playlist"
-                class="absolute top-2 right-2 grid place-items-center w-8 h-8 rounded-lg bg-gray-950/80 text-accent-400 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-accent-500 hover:text-gray-950 transition-all">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        </button>
       </div>
     </template>
   </div>

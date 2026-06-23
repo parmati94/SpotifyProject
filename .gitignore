@@ -297,3 +297,5 @@ dist
 .pnp.*
 /.vscode
 cache
+# DockerHub token (local only)
+.dockerhub-token

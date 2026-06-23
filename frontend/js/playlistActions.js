@@ -11,6 +11,8 @@ export function playlistActions() {
     playlists: [],
     playlistsLoading: false,
     playlistSearch: '',
+    sourceDropdownOpen: false,  // create-from-playlist source picker
+    sourceSearch: '',
     actionLoading: false, // global mutex: one mutating action at a time
     busy: '',             // which action is running ('daily' | 'weekly' | 'delete' | 'from')
     createForm: { source: '', target: '', count: 60 },
@@ -81,13 +83,26 @@ export function playlistActions() {
       );
     },
 
-    // Fill the create form from a playlist card and scroll the form into view.
-    useAsSource(name) {
+    // ── Source selection (shared by the dropdown and the grid) ──────────────
+    // The grid and the dropdown both call this, so they stay in sync.
+    selectSource(name, { scroll = false } = {}) {
       this.createForm.source = name;
-      this.$nextTick(() => {
-        document.getElementById('create-from-playlist')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      this.sourceDropdownOpen = false;
+      this.sourceSearch = '';
+      if (scroll) {
+        this.$nextTick(() => {
+          document.getElementById('create-from-playlist')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    },
+    selectedSourcePlaylist() {
+      return this.playlists.find((p) => p.name === this.createForm.source) || null;
+    },
+    sourceOptions() {
+      const q = this.sourceSearch.trim().toLowerCase();
+      if (!q) return this.playlists;
+      return this.playlists.filter((p) => p.name.toLowerCase().includes(q));
     },
 
     // ── Internals ──────────────────────────────────────────────────────────

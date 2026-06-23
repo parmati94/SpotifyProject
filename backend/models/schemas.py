@@ -17,6 +17,7 @@ class PlaylistItem(BaseModel):
     name: str
     total_tracks: int
     image_url: str
+    recently_played: bool = False
 
 
 class PlaylistsResponse(BaseModel):
