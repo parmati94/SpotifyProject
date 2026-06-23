@@ -70,7 +70,12 @@ def test_health(client):
 
 
 def test_session_unauthenticated(client):
-    assert client.get("/api/session").json() == {"authenticated": False}
+    assert client.get("/api/session").json() == {"authenticated": False, "dev": False}
+
+
+def test_dev_login_route_absent_when_disabled(client):
+    # DEV_AUTH is off in tests, so the bypass route isn't even mounted.
+    assert client.get("/dev/login", follow_redirects=False).status_code == 404
 
 
 def test_login_redirects_to_spotify(client):
@@ -113,3 +118,45 @@ def test_from_playlist_validation_rejects_bad_count(client):
         json={"source_playlist": "src", "target_playlist": "tgt", "num_songs": 9999},
     )
     assert r.status_code == 422  # pydantic rejects num_songs > 200
+
+
+def _settings_with_keys():
+    # Last.fm + Claude keyed (Gemini deliberately not), built without env/validation.
+    from backend.common.config import Settings
+
+    return Settings.model_construct(
+        recommender="lastfm",
+        lastfm_api_key="lk",
+        gemini_api_key=None,
+        gemini_model="gemini-2.5-flash",
+        anthropic_api_key="ak",
+        claude_model="claude-sonnet-4-6",
+    )
+
+
+def test_recommender_status_lists_available_and_active(client):
+    from backend.common.config import get_settings
+
+    controller.app.dependency_overrides[get_settings] = _settings_with_keys
+    data = client.get("/api/recommender").json()
+    assert [e["id"] for e in data["available"]] == ["lastfm", "claude", "catalog"]
+    assert data["active"] == "lastfm"  # the configured default
+    claude = next(e for e in data["available"] if e["id"] == "claude")
+    assert claude["model"] == "claude-sonnet-4-6"
+
+
+def test_recommender_switch_persists_in_session(client):
+    from backend.common.config import get_settings
+
+    controller.app.dependency_overrides[get_settings] = _settings_with_keys
+    assert client.put("/api/recommender", json={"engine": "claude"}).json()["active"] == "claude"
+    # Same client keeps the session cookie, so the choice survives the next request.
+    assert client.get("/api/recommender").json()["active"] == "claude"
+
+
+def test_recommender_rejects_unavailable_engine(client):
+    from backend.common.config import get_settings
+
+    controller.app.dependency_overrides[get_settings] = _settings_with_keys
+    r = client.put("/api/recommender", json={"engine": "gemini"})  # no Gemini key
+    assert r.status_code == 400

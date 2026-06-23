@@ -18,6 +18,15 @@ _COMMON = Path(__file__).resolve().parent  # backend/common/
 _PKG = _COMMON.parent                      # backend/
 _ROOT = _PKG.parent                        # repo root
 
+# Human-readable engine names for the UI. Single source of truth shared by the
+# availability list and any display.
+ENGINE_LABELS = {
+    "lastfm": "Last.fm",
+    "gemini": "Gemini",
+    "claude": "Claude",
+    "catalog": "Spotify catalog",
+}
+
 
 class Settings(BaseSettings):
     # Environment variables take precedence; either .env location is read if present.
@@ -60,22 +69,58 @@ class Settings(BaseSettings):
     # --- Logging ---
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 
-    @property
-    def effective_recommender(self) -> Literal["lastfm", "gemini", "claude", "catalog"]:
-        """Each keyed engine needs its key; without it, degrade to the catalog engine
-        (Spotify-native, always available) rather than failing a playlist build."""
+    # --- Dev auth bypass (NEVER enable in production) ---
+    # Headless/LAN dev can't complete Spotify OAuth: a non-loopback http origin like
+    # http://192.168.x.x:PORT/callback is an illegal redirect URI. With dev_auth on, the
+    # /dev/login route seeds the session from a pre-captured refresh token (skipping the
+    # browser round-trip entirely), and /callback logs the refresh token once so you can
+    # capture it from a single real login on the HTTPS deploy. Defaults off; the prod
+    # compose also pins it false so a shared .env can't leak it in.
+    dev_auth: bool = Field(False, alias="DEV_AUTH")
+    dev_refresh_token: str | None = Field(None, alias="DEV_REFRESH_TOKEN")
+
+    def resolve_engine(
+        self, engine: str
+    ) -> Literal["lastfm", "gemini", "claude", "catalog"]:
+        """Validate a requested engine against configured credentials. Each keyed
+        engine needs its key; without it, degrade to the catalog engine (Spotify-native,
+        always available) rather than failing a playlist build. Unknown engines also
+        degrade to catalog. Drives both the env default and any runtime selection."""
         required_key = {
             "lastfm": self.lastfm_api_key,
             "gemini": self.gemini_api_key,
             "claude": self.anthropic_api_key,
-        }.get(self.recommender)
-        if self.recommender != "catalog" and not required_key:
+        }.get(engine)
+        if engine != "catalog" and not required_key:
             logger.warning(
-                "RECOMMENDER=%s but its API key is unset; falling back to the catalog "
-                "recommender.", self.recommender,
+                "Recommender %r requested but its API key is unset; falling back to "
+                "the catalog recommender.", engine,
             )
             return "catalog"
-        return self.recommender
+        return engine  # type: ignore[return-value]
+
+    @property
+    def effective_recommender(self) -> Literal["lastfm", "gemini", "claude", "catalog"]:
+        """The configured default engine (RECOMMENDER), resolved against credentials."""
+        return self.resolve_engine(self.recommender)
+
+    def available_engines(self) -> list[dict]:
+        """Engines the user may pick from: the catalog fallback always, plus each keyed
+        engine whose API key is configured. `model` carries the configured model for the
+        LLM engines (for the UI to show, e.g. "Claude · claude-sonnet-4-6"), None for the
+        others. Order: real engines first, catalog fallback last."""
+        keyed = [
+            ("lastfm", self.lastfm_api_key, None),
+            ("gemini", self.gemini_api_key, self.gemini_model),
+            ("claude", self.anthropic_api_key, self.claude_model),
+        ]
+        engines = [
+            {"id": eid, "label": ENGINE_LABELS[eid], "model": model}
+            for eid, key, model in keyed
+            if key
+        ]
+        engines.append({"id": "catalog", "label": ENGINE_LABELS["catalog"], "model": None})
+        return engines
 
 
 @lru_cache

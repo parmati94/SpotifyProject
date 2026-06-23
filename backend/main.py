@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.common.config import get_settings
+from backend.common.logging_config import logger
 from backend.routers import oauth, playlists, system
 
 settings = get_settings()  # validates required env on startup; fails loud if missing
@@ -29,6 +30,15 @@ app.add_middleware(
 app.include_router(oauth.router)
 app.include_router(system.router)
 app.include_router(playlists.router)
+
+if settings.dev_auth:
+    # Dev-only refresh-token login bypass; never reached in prod (flag defaults off and
+    # the prod compose pins it false). Mounted conditionally so the route simply doesn't
+    # exist otherwise.
+    from backend.routers import dev
+
+    app.include_router(dev.router)
+    logger.warning("DEV_AUTH enabled — /dev/login (refresh-token bypass) is active.")
 
 
 if __name__ == "__main__":

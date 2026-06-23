@@ -12,8 +12,12 @@ from .base import Recommender
 from .catalog import CatalogRecommender
 
 
-def build_recommender(settings: Settings, sp) -> Recommender:
-    engine = settings.effective_recommender  # keys guaranteed present for keyed engines
+def build_recommender(settings: Settings, sp, engine: str | None = None) -> Recommender:
+    # Caller may pass an already-resolved engine (e.g. a per-session selection);
+    # otherwise fall back to the configured default. Either way the engine is assumed
+    # resolved — its key is guaranteed present for keyed engines.
+    if engine is None:
+        engine = settings.effective_recommender
     if engine == "lastfm":
         from .lastfm import LastfmRecommender
 
