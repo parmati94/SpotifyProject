@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
+from backend.common.config import Settings, get_settings
 from backend.common.constants import DEFAULT_IMAGE_URL
 from backend.common.logging_config import logger
 from backend.core import playlists as playlist_ops
 from backend.core.recommender.base import Recommender, RecommenderError
+from backend.core.recommender.factory import build_recommender
 from backend.core.spotify_client import SpotifyClient
-from backend.deps import get_client, get_recommender
+from backend.deps import (
+    SESSION_VIBE_ENGINE_KEY,
+    get_client,
+    get_recommender,
+    selected_vibe_engine,
+)
 from backend.models.schemas import (
     FromPlaylistRequest,
     MessageResponse,
     PlaylistItem,
     PlaylistMutationResponse,
     PlaylistsResponse,
+    VibeRequest,
 )
 
 router = APIRouter(prefix="/api/playlists", tags=["playlists"])
@@ -84,6 +92,31 @@ def create_from_playlist(
         body.source_playlist,
         body.target_playlist,
         body.num_songs,
+    )
+    return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)
+
+
+@router.post("/vibe", response_model=PlaylistMutationResponse)
+def create_vibe(
+    body: VibeRequest,
+    request: Request,
+    client: SpotifyClient = Depends(get_client),
+    settings: Settings = Depends(get_settings),
+) -> PlaylistMutationResponse:
+    # A valid engine override is persisted so the panel's picker remembers it; an
+    # invalid/absent one falls through to the session default (best-available LLM).
+    if body.engine and settings.resolve_vibe_engine(body.engine) == body.engine:
+        request.session[SESSION_VIBE_ENGINE_KEY] = body.engine
+    engine = selected_vibe_engine(request, settings)
+    if engine is None:
+        raise HTTPException(
+            status_code=400, detail="Vibe mode needs a configured LLM (Claude or Gemini)."
+        )
+    recommender = build_recommender(settings, client.sp, engine)
+    res = _run(
+        lambda: playlist_ops.create_vibe_playlist(
+            client, recommender, body.description, body.num_songs, name_it=body.name_it
+        )
     )
     return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)
 

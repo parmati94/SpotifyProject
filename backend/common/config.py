@@ -124,6 +124,28 @@ class Settings(BaseSettings):
         engines.append({"id": "catalog", "label": ENGINE_LABELS["catalog"], "model": None})
         return engines
 
+    def available_vibe_engines(self) -> list[dict]:
+        """The LLM engines usable for vibe mode (free-text playlists), credential-gated.
+        Only LLMs can interpret a natural-language vibe, so lastfm/catalog are excluded.
+        Order: claude first (higher quality), then gemini. Empty ⇒ vibe mode is disabled."""
+        keyed = [
+            ("claude", self.anthropic_api_key, self.claude_model),
+            ("gemini", self.gemini_api_key, self.gemini_model),
+        ]
+        return [
+            {"id": eid, "label": ENGINE_LABELS[eid], "model": model}
+            for eid, key, model in keyed
+            if key
+        ]
+
+    def resolve_vibe_engine(self, requested: str | None) -> str | None:
+        """The LLM that serves vibe mode: the requested one if it's an available LLM,
+        else the best available (claude > gemini), else None when no LLM key is set."""
+        available = [e["id"] for e in self.available_vibe_engines()]
+        if requested in available:
+            return requested
+        return available[0] if available else None
+
 
 @lru_cache
 def get_settings() -> Settings:

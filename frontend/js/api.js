@@ -30,10 +30,12 @@ export const api = {
   logout: () => apiFetch('/api/logout', { method: 'POST' }),
   recommender: () => apiFetch('/api/recommender'),
   setRecommender: (engine) => apiFetch('/api/recommender', { method: 'PUT', body: { engine } }),
+  vibeStatus: () => apiFetch('/api/vibe'),
   playlists: () => apiFetch('/api/playlists'),
   createDaily: () => apiFetch('/api/playlists/daily', { method: 'POST' }),
   deleteDaily: () => apiFetch('/api/playlists/daily', { method: 'DELETE' }),
   extendWeekly: () => apiFetch('/api/playlists/weekly', { method: 'POST' }),
   createFromPlaylist: (body) =>
     apiFetch('/api/playlists/from-playlist', { method: 'POST', body }),
+  createVibe: (body) => apiFetch('/api/playlists/vibe', { method: 'POST', body }),
 };

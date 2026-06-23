@@ -23,6 +23,9 @@ document.addEventListener('alpine:init', () => {
     // ── Recommendation engine (per-session, server-backed) ──────────────
     recommender: { active: null, available: [], switching: false },
 
+    // ── Vibe mode LLM (per-session; empty `available` ⇒ vibe hidden) ─────
+    vibe: { active: null, available: [] },
+
     // ── Theme ────────────────────────────────────────────────────────────
     showSettings: false,
     theme: 'spotify',
@@ -46,6 +49,7 @@ document.addEventListener('alpine:init', () => {
       await this.checkSession();
       this.checking = false;
       this.loadRecommender();  // app config, not gated on auth; fine to fire after probe
+      this.loadVibe();         // ditto — populates the vibe panel's LLM picker
 
       // Success toasts auto-dismiss; errors stay until dismissed.
       this.$watch('actionResult', (r) => {
@@ -113,6 +117,23 @@ document.addEventListener('alpine:init', () => {
       } finally {
         this.recommender.switching = false;
       }
+    },
+
+    // ── Vibe mode LLM ───────────────────────────────────────────────────
+    // LLM-only and independent of the recommendation engine above. The picker only
+    // renders when >1 LLM is available; the whole vibe panel hides when 0 are.
+    async loadVibe() {
+      try {
+        const data = await api.vibeStatus();
+        this.vibe.active = data.active;
+        this.vibe.available = data.available ?? [];
+      } catch { /* non-fatal: vibe panel just stays hidden */ }
+    },
+
+    // Picked locally and remembered server-side on the next generate (createVibe sends
+    // it); no round-trip needed just to highlight a choice.
+    selectVibeEngine(id) {
+      if (this.vibe.available.some((e) => e.id === id)) this.vibe.active = id;
     },
 
     // ── Theme ────────────────────────────────────────────────────────────

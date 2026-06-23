@@ -5,13 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from backend.common.config import Settings, get_settings
-from backend.deps import SESSION_ENGINE_KEY, selected_engine
+from backend.deps import SESSION_ENGINE_KEY, selected_engine, selected_vibe_engine
 from backend.models.schemas import (
     MessageResponse,
     RecommenderInfo,
     RecommenderStatus,
     SessionResponse,
     SetRecommenderRequest,
+    VibeStatus,
 )
 
 router = APIRouter(prefix="/api", tags=["system"])
@@ -67,3 +68,13 @@ def set_recommender(
         )
     request.session[SESSION_ENGINE_KEY] = body.engine
     return _recommender_status(request, settings)
+
+
+@router.get("/vibe", response_model=VibeStatus)
+def get_vibe_status(
+    request: Request, settings: Settings = Depends(get_settings)
+) -> VibeStatus:
+    """The LLM picker state for vibe mode: this session's active LLM and the LLM-only
+    list it may switch between. Empty list ⇒ no LLM configured ⇒ the UI hides vibe mode."""
+    available = [RecommenderInfo(**e) for e in settings.available_vibe_engines()]
+    return VibeStatus(active=selected_vibe_engine(request, settings), available=available)

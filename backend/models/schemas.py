@@ -56,7 +56,25 @@ class SetRecommenderRequest(BaseModel):
     engine: str = Field(..., min_length=1)
 
 
+class VibeStatus(BaseModel):
+    """Vibe mode's LLM picker state: the active engine and the LLM-only list to choose
+    from. `active` is None and `available` is empty when no LLM key is configured, which
+    the UI reads as "hide vibe mode entirely"."""
+    active: str | None = None
+    available: list[RecommenderInfo]
+
+
 class FromPlaylistRequest(BaseModel):
     source_playlist: str = Field(..., min_length=1)
     target_playlist: str = Field(..., min_length=1)
     num_songs: int = Field(..., ge=1, le=200)
+
+
+class VibeRequest(BaseModel):
+    # Free-text description of the playlist to build ("rainy sunday coffee-shop jazz").
+    description: str = Field(..., min_length=1, max_length=300)
+    num_songs: int = Field(40, ge=1, le=200)
+    name_it: bool = True
+    # Optional per-request LLM override; when a valid LLM, it's also persisted to the
+    # session so the vibe panel's picker remembers it. Absent ⇒ use the session default.
+    engine: str | None = None

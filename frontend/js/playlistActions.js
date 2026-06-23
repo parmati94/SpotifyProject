@@ -15,8 +15,10 @@ export function playlistActions() {
     sourceDropdownOpen: false,  // create-from-playlist source picker
     sourceSearch: '',
     actionLoading: false, // global mutex: one mutating action at a time
-    busy: '',             // which action is running ('daily' | 'weekly' | 'delete' | 'from')
+    busy: '',             // which action is running ('daily'|'weekly'|'delete'|'from'|'vibe')
+    createMode: 'playlist', // 'playlist' (seed from existing) | 'vibe' (free-text)
     createForm: { source: '', target: '', count: 60 },
+    vibeForm: { description: '', count: 40, nameIt: true },
 
     // ── Derived ──────────────────────────────────────────────────────────────
     // Plain methods, not getters: this object is SPREAD into the Alpine root
@@ -91,6 +93,25 @@ export function playlistActions() {
         'Crafting your new playlist…',
         async (data) => {
           this.createForm.target = '';
+          await this._refreshAfterMutation(data); // reflect the new playlist in the browser
+        },
+      );
+    },
+
+    async createVibe() {
+      const description = this.vibeForm.description.trim();
+      if (!description) return this._toast(false, 'Describe the vibe you want first.');
+      await this._runAction(
+        'vibe',
+        () => api.createVibe({
+          description,
+          num_songs: this.vibeForm.count,
+          name_it: this.vibeForm.nameIt,
+          engine: this.vibe.active,  // remembered server-side for next time
+        }),
+        'Conjuring your vibe…',
+        async (data) => {
+          this.vibeForm.description = '';
           await this._refreshAfterMutation(data); // reflect the new playlist in the browser
         },
       );
