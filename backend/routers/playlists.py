@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from backend.common.constants import DEFAULT_IMAGE_URL
 from backend.common.logging_config import logger
 from backend.core import playlists as playlist_ops
-from backend.core.recommender.base import Recommender
+from backend.core.recommender.base import Recommender, RecommenderError
 from backend.core.spotify_client import SpotifyClient
 from backend.deps import get_client, get_recommender
 from backend.models.schemas import (
@@ -78,8 +78,12 @@ def create_from_playlist(
 
 
 def _run(fn, *args) -> str:
-    """Call a core playlist op, turning a ValueError into a clean 400."""
+    """Call a core playlist op, mapping known failures to clean HTTP errors:
+    ValueError → 400 (e.g. nothing resolved); RecommenderError → 502 with the
+    engine's reason (e.g. Claude credits exhausted, bad key, rate limit)."""
     try:
         return fn(*args)
+    except RecommenderError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

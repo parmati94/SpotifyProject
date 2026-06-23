@@ -105,6 +105,11 @@ celerybeat.pid
 # Local credential scratch files (never commit)
 .gemini-api
 .spotify-api
+.lastfm-api
+.anthropic-api
+
+# Personal planning doc — local only
+PLANNING.md
 
 # Personal local-deploy compose (real domain + secrets) — never commit
 docker-compose.local.yml

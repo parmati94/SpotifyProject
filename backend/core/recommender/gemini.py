@@ -15,7 +15,7 @@ import time
 from pydantic import BaseModel
 
 from backend.common.logging_config import logger
-from .base import Recommender, Seed, Suggestion
+from .base import Recommender, RecommenderError, Seed, Suggestion
 
 # Over-request multiplier: ask for ~25% more than needed so resolver misses
 # (hallucinated songs, punctuation mismatches) still leave enough real tracks.
@@ -92,8 +92,8 @@ class GeminiRecommender(Recommender):
                 if retryable and attempt < _MAX_RETRIES:
                     time.sleep(2 ** (attempt - 1))  # 1s, 2s backoff
                     continue
-                return []
-        return []
+                raise RecommenderError(f"Gemini request failed: {exc}") from exc
+        raise RecommenderError("Gemini request failed after retries.")
 
     @staticmethod
     def _parse(response) -> list[Suggestion]:

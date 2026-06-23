@@ -92,6 +92,21 @@ def test_create_daily(client):
     assert client.fake_sp.added    # with tracks
 
 
+def test_recommender_failure_returns_502_with_reason(client):
+    # If the engine fails hard (e.g. Claude credits exhausted), the user gets a 502
+    # carrying the cause — not a misleading "no recommendations, try again later" 400.
+    from backend.core.recommender.base import RecommenderError
+
+    class Failing:
+        def recommend(self, seeds, count):
+            raise RecommenderError("Claude request failed: credit balance is too low")
+
+    controller.app.dependency_overrides[get_recommender] = lambda: Failing()
+    r = client.post("/api/playlists/daily")
+    assert r.status_code == 502
+    assert "credit balance is too low" in r.json()["detail"]
+
+
 def test_from_playlist_validation_rejects_bad_count(client):
     r = client.post(
         "/api/playlists/from-playlist",

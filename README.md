@@ -52,16 +52,34 @@ defaults as a fallback. Copy `backend/.env.example` to `backend/.env` to start.
 |----------|----------|-------|
 | `CLIENT_ID`, `CLIENT_SECRET` | ✅ | From the Spotify dashboard |
 | `SESSION_SECRET` | ✅ | `openssl rand -hex 32` |
-| `GEMINI_API_KEY` | — | Enables the Gemini recommender; unset → `catalog` fallback |
+| `LASTFM_API_KEY` | — | Enables the default `lastfm` engine — free key from [last.fm/api](https://www.last.fm/api) |
+| `GEMINI_API_KEY` | — | Enables the `gemini` engine ([free](https://aistudio.google.com/apikey)) |
+| `ANTHROPIC_API_KEY` | — | Enables the `claude` engine ([console](https://console.anthropic.com), needs credit) |
+
+(Any keyed engine without its key degrades to the `catalog` engine, which needs none.)
 
 **Non-secret config — in `docker-compose*.yml` (defaults in `config.py`):**
 
 | Variable | Notes |
 |----------|-------|
 | `REDIRECT_URI` | Must exactly match a registered Redirect URI **and** the origin you serve from. Spotify [forbids `localhost`](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri) — use the loopback IP literal (`http://127.0.0.1:PORT/callback`) and browse via `127.0.0.1` too |
-| `RECOMMENDER` | `gemini` (default) or `catalog` |
-| `GEMINI_MODEL` | Defaults to `gemini-3.5-flash` |
+| `RECOMMENDER` | Engine toggle: `lastfm` (default) · `gemini` · `claude` · `catalog` — see below |
+| `GEMINI_MODEL` | Defaults to `gemini-2.5-flash` |
+| `CLAUDE_MODEL` | Defaults to `claude-sonnet-4-6` |
 | `LOG_LEVEL` | `INFO` by default |
+
+### Recommendation engines
+
+Song suggestions come from a swappable engine (set `RECOMMENDER`); every suggestion is then
+verified against Spotify search before it's added, so playlists only ever contain real, playable
+tracks.
+
+| Engine | What it is | Trade-off |
+|--------|------------|-----------|
+| **`lastfm`** (default) | Last.fm `track.getSimilar` — real co-listening data, aggregated across your seeds | Fast (~1s), free, no hallucination. The data-driven replacement for Spotify's dead recommendations endpoint. |
+| **`gemini`** | Google Gemini LLM | Free; latency/quality vary by model. |
+| **`claude`** | Anthropic Claude (Sonnet 4.6) | Highest-quality LLM; ~$0.01–0.06 per build. |
+| **`catalog`** | Seed artists' top tracks via Spotify | No external key; the always-works fallback. |
 
 ## Run with Docker (production)
 

@@ -13,6 +13,12 @@ from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
 
+class RecommenderError(RuntimeError):
+    """An engine failed hard (auth, exhausted credits, rate limit, network) after its
+    own retries. Distinct from "no results" — surfaced to the user with the cause,
+    instead of silently producing an empty playlist and saying "try again later"."""
+
+
 @dataclass(frozen=True)
 class Seed:
     """A track the user already likes, used to steer recommendations."""

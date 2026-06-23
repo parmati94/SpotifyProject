@@ -40,22 +40,39 @@ class Settings(BaseSettings):
     session_secret: str = Field(..., alias="SESSION_SECRET")
 
     # --- Recommendations ---
-    recommender: Literal["gemini", "catalog"] = Field("gemini", alias="RECOMMENDER")
+    # Engine toggle. lastfm (default): real data-driven similarity, no key cost beyond
+    # the free Last.fm key. gemini/claude: LLM engines. catalog: Spotify-native fallback.
+    recommender: Literal["lastfm", "gemini", "claude", "catalog"] = Field(
+        "lastfm", alias="RECOMMENDER"
+    )
+    # Last.fm — free key from https://www.last.fm/api (read methods need no secret).
+    lastfm_api_key: str | None = Field(None, alias="LASTFM_API_KEY")
+    # Gemini — free key (no card) from https://aistudio.google.com/apikey.
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
     # 2.5-flash is fast (~5s) and full-quality. 3.5-flash is currently badly degraded
     # (~30s); gemini-flash-lite-latest is fastest (~3s) if you want max speed.
     gemini_model: str = Field("gemini-2.5-flash", alias="GEMINI_MODEL")
+    # Claude — key + a little credit from https://console.anthropic.com (separate from
+    # any Claude.ai/Max subscription).
+    anthropic_api_key: str | None = Field(None, alias="ANTHROPIC_API_KEY")
+    claude_model: str = Field("claude-sonnet-4-6", alias="CLAUDE_MODEL")
 
     # --- Logging ---
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 
     @property
-    def effective_recommender(self) -> Literal["gemini", "catalog"]:
-        """Gemini needs a key; without one, degrade to the catalog engine."""
-        if self.recommender == "gemini" and not self.gemini_api_key:
+    def effective_recommender(self) -> Literal["lastfm", "gemini", "claude", "catalog"]:
+        """Each keyed engine needs its key; without it, degrade to the catalog engine
+        (Spotify-native, always available) rather than failing a playlist build."""
+        required_key = {
+            "lastfm": self.lastfm_api_key,
+            "gemini": self.gemini_api_key,
+            "claude": self.anthropic_api_key,
+        }.get(self.recommender)
+        if self.recommender != "catalog" and not required_key:
             logger.warning(
-                "RECOMMENDER=gemini but GEMINI_API_KEY is unset; "
-                "falling back to the catalog recommender."
+                "RECOMMENDER=%s but its API key is unset; falling back to the catalog "
+                "recommender.", self.recommender,
             )
             return "catalog"
         return self.recommender
