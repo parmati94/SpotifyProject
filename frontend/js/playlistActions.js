@@ -11,6 +11,7 @@ export function playlistActions() {
     playlists: [],
     playlistsLoading: false,
     playlistSearch: '',
+    playlistTab: 'library',     // 'library' (user's own) | 'app' (made by this app)
     sourceDropdownOpen: false,  // create-from-playlist source picker
     sourceSearch: '',
     actionLoading: false, // global mutex: one mutating action at a time
@@ -21,10 +22,19 @@ export function playlistActions() {
     // Plain methods, not getters: this object is SPREAD into the Alpine root
     // (...playlistActions()), and the spread operator evaluates getters once and
     // copies their value as a static property (freezing them). Methods copy fine.
+    // Playlists in the active tab (library = the user's own; app = made by this app),
+    // then narrowed by the search box.
     filteredPlaylists() {
       const q = this.playlistSearch.trim().toLowerCase();
-      if (!q) return this.playlists;
-      return this.playlists.filter((p) => p.name.toLowerCase().includes(q));
+      return this.playlistsInTab(this.playlistTab).filter(
+        (p) => !q || p.name.toLowerCase().includes(q),
+      );
+    },
+    playlistsInTab(tab) {
+      return this.playlists.filter((p) => (tab === 'app' ? p.created_by_app : !p.created_by_app));
+    },
+    tabCount(tab) {
+      return this.playlistsInTab(tab).length;
     },
     totalTracks() {
       return this.playlists.reduce((n, p) => n + (p.total_tracks || 0), 0);
