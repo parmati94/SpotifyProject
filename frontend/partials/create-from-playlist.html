@@ -143,9 +143,9 @@
         <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">Songs</span>
         <span class="text-sm font-semibold text-accent-400" x-text="vibeForm.count"></span>
       </div>
-      <input x-model.number="vibeForm.count" type="range" min="20" max="200" step="10"
+      <input x-model.number="vibeForm.count" type="range" min="20" max="100" step="10"
              class="mt-2 w-full accent-accent-500" />
-      <div class="flex justify-between text-[11px] text-gray-600 mt-1"><span>20</span><span>200</span></div>
+      <div class="flex justify-between text-[11px] text-gray-600 mt-1"><span>20</span><span>100</span></div>
     </div>
 
     <button @click="createVibe()" :disabled="actionLoading"

@@ -37,6 +37,10 @@ DEFAULT_DAILY_COUNT = 40
 WEEKLY_EXTEND_COUNT = 40
 DEFAULT_VIBE_COUNT = 40
 _MAX_PLAYLIST_SONGS = 200
+# Vibe builds cap lower than seed-from-playlist: a single free-text vibe has a real quality
+# ceiling (the LLM exhausts on-vibe picks and drifts well before 200; even the Last.fm fill
+# hits genre exhaustion). 100 is a generous upper bound that stays mostly on-vibe.
+_MAX_VIBE_SONGS = 100
 # Fallback name when the user opts out of AI naming (or the LLM returns none); keeps the
 # date-named-daily heuristic in is_app_created clear of vibe playlists.
 _VIBE_NAME_MAX = 40
@@ -259,7 +263,7 @@ def create_vibe_playlist(
     description = description.strip()
     if not description:
         raise ValueError("Describe the vibe you want before generating.")
-    count = max(1, min(count, _MAX_PLAYLIST_SONGS))
+    count = max(1, min(count, _MAX_VIBE_SONGS))
 
     result = recommender.recommend_vibe(description, count, name_it=name_it)
     logger.debug("Vibe pipeline: engine returned %d suggestions; resolving", len(result.suggestions))

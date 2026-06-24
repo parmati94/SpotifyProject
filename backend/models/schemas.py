@@ -81,7 +81,9 @@ class FromPlaylistRequest(BaseModel):
 class VibeRequest(BaseModel):
     # Free-text description of the playlist to build ("rainy sunday coffee-shop jazz").
     description: str = Field(..., min_length=1, max_length=300)
-    num_songs: int = Field(40, ge=1, le=200)
+    # Capped lower than from-playlist (200): a single free-text vibe has a real quality
+    # ceiling — the LLM exhausts genuinely on-vibe picks well before 200 and starts to drift.
+    num_songs: int = Field(40, ge=1, le=100)
     name_it: bool = True
     # Optional per-request LLM override; when a valid LLM, it's also persisted to the
     # session so the vibe panel's picker remembers it. Absent ⇒ use the session default.
