@@ -16,7 +16,8 @@ export function playlistActions() {
     sourceSearch: '',
     actionLoading: false, // global mutex: one mutating action at a time
     busy: '',             // which action is running ('daily'|'weekly'|'delete'|'from'|'vibe')
-    createMode: 'playlist', // 'playlist' (seed from existing) | 'vibe' (free-text)
+    createMode: 'playlist',   // 'playlist' (seed from existing) | 'vibe' (free-text)
+    createModeTouched: false, // true once the user picks a tab, so loadVibe's default doesn't override them
     createForm: { source: '', target: '', count: 60 },
     vibeForm: { description: '', count: 40, nameIt: true },
 

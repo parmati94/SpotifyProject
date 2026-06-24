@@ -181,6 +181,10 @@ document.addEventListener('alpine:init', () => {
         this.vibe.active = data.active;
         this.vibe.activeModel = data.active_model;
         this.vibe.available = data.available ?? [];
+        // Vibe is the headline mode — default the Create card to it when an LLM is
+        // configured (else there'd be no vibe tab to land on). Don't override a user
+        // who already clicked a tab in the brief window before this resolved.
+        if (!this.createModeTouched && this.vibe.available.length) this.createMode = 'vibe';
       } catch { /* non-fatal: vibe panel just stays hidden */ }
     },
 

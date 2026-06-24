@@ -9,10 +9,10 @@
     </div>
     <!-- Segmented mode toggle — hidden entirely when no LLM is available for vibe mode. -->
     <div x-show="vibe.available.length" class="inline-flex rounded-lg border border-gray-800 bg-gray-950 p-1">
-      <button @click="createMode = 'playlist'" class="px-3 py-1.5 text-sm rounded-md transition-colors"
-              :class="createMode === 'playlist' ? 'bg-accent-500 text-gray-950 font-medium' : 'text-gray-400 hover:text-white'">From a playlist</button>
-      <button @click="createMode = 'vibe'" class="px-3 py-1.5 text-sm rounded-md transition-colors"
+      <button @click="createMode = 'vibe'; createModeTouched = true" class="px-3 py-1.5 text-sm rounded-md transition-colors"
               :class="createMode === 'vibe' ? 'bg-accent-500 text-gray-950 font-medium' : 'text-gray-400 hover:text-white'">From a vibe</button>
+      <button @click="createMode = 'playlist'; createModeTouched = true" class="px-3 py-1.5 text-sm rounded-md transition-colors"
+              :class="createMode === 'playlist' ? 'bg-accent-500 text-gray-950 font-medium' : 'text-gray-400 hover:text-white'">From a playlist</button>
     </div>
   </div>
 
