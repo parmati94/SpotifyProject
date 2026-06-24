@@ -107,7 +107,8 @@ export function playlistActions() {
           description,
           num_songs: this.vibeForm.count,
           name_it: this.vibeForm.nameIt,
-          engine: this.vibe.active,  // remembered server-side for next time
+          engine: this.vibe.active,       // remembered server-side for next time
+          model: this.vibe.activeModel,   // ditto — the specific model within that engine
         }),
         'Conjuring your vibe…',
         async (data) => {

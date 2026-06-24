@@ -21,10 +21,10 @@ document.addEventListener('alpine:init', () => {
     confirmDialog: { show: false, title: '', message: '', confirmLabel: 'Confirm', danger: true, resolve: null },
 
     // ── Recommendation engine (per-session, server-backed) ──────────────
-    recommender: { active: null, available: [], switching: false },
+    recommender: { active: null, activeModel: null, available: [], switching: false },
 
     // ── Vibe mode LLM (per-session; empty `available` ⇒ vibe hidden) ─────
-    vibe: { active: null, available: [] },
+    vibe: { active: null, activeModel: null, available: [] },
 
     // ── Theme ────────────────────────────────────────────────────────────
     showSettings: false,
@@ -90,6 +90,7 @@ document.addEventListener('alpine:init', () => {
       try {
         const data = await api.recommender();
         this.recommender.active = data.active;
+        this.recommender.activeModel = data.active_model;
         this.recommender.available = data.available ?? [];
       } catch { /* non-fatal: selector/badge just stay hidden */ }
     },
@@ -100,40 +101,78 @@ document.addEventListener('alpine:init', () => {
     engineLabel(e) {
       return e ? (e.model ? `${e.label} · ${e.model}` : e.label) : '';
     },
+    // The selectable models for an engine id in a given list — drives the model
+    // sub-selector, which only shows when an engine offers more than one.
+    modelsOf(list, id) {
+      return (list.find((e) => e.id === id)?.models) ?? [];
+    },
 
+    // Switch engine. The server re-resolves the model to that engine's default, which we
+    // read back; pass model=undefined so it isn't pinned to a stale cross-engine value.
     async selectRecommender(id) {
       if (id === this.recommender.active || this.recommender.switching) return;
       const prev = this.recommender.active;
+      const prevModel = this.recommender.activeModel;
       this.recommender.active = id;          // optimistic
       this.recommender.switching = true;
       try {
-        const data = await api.setRecommender(id);
+        const data = await api.setRecommender(id, undefined);
         this.recommender.active = data.active;
+        this.recommender.activeModel = data.active_model;
         this.recommender.available = data.available ?? this.recommender.available;
         this._toast(true, `Recommendations now use ${this.engineLabel(this.activeEngine())}.`);
       } catch (e) {
         this.recommender.active = prev;      // roll back on failure
+        this.recommender.activeModel = prevModel;
         this._handleError(e, 'Could not change the recommendation engine.');
       } finally {
         this.recommender.switching = false;
       }
     },
 
+    // Switch the model within the already-active engine.
+    async selectModel(model) {
+      if (model === this.recommender.activeModel || this.recommender.switching) return;
+      const prev = this.recommender.activeModel;
+      this.recommender.activeModel = model;  // optimistic
+      this.recommender.switching = true;
+      try {
+        const data = await api.setRecommender(this.recommender.active, model);
+        this.recommender.activeModel = data.active_model;
+        this._toast(true, `Recommendations now use ${this.engineLabel(this.activeEngine())}.`);
+      } catch (e) {
+        this.recommender.activeModel = prev;
+        this._handleError(e, 'Could not change the model.');
+      } finally {
+        this.recommender.switching = false;
+      }
+    },
+
     // ── Vibe mode LLM ───────────────────────────────────────────────────
-    // LLM-only and independent of the recommendation engine above. The picker only
-    // renders when >1 LLM is available; the whole vibe panel hides when 0 are.
+    // LLM-only and independent of the recommendation engine above. The engine picker
+    // renders when >1 LLM is available; the model sub-selector when an engine has >1
+    // model. Both are remembered server-side on the next generate (createVibe sends them).
     async loadVibe() {
       try {
         const data = await api.vibeStatus();
         this.vibe.active = data.active;
+        this.vibe.activeModel = data.active_model;
         this.vibe.available = data.available ?? [];
       } catch { /* non-fatal: vibe panel just stays hidden */ }
     },
 
-    // Picked locally and remembered server-side on the next generate (createVibe sends
-    // it); no round-trip needed just to highlight a choice.
     selectVibeEngine(id) {
-      if (this.vibe.available.some((e) => e.id === id)) this.vibe.active = id;
+      if (id === this.vibe.active || !this.vibe.available.some((e) => e.id === id)) return;
+      this.vibe.active = id;
+      // Reset the model to the new engine's default so the sub-selector repopulates and
+      // never shows a model from the other provider.
+      this.vibe.activeModel = this.modelsOf(this.vibe.available, id)[0] ?? null;
+    },
+
+    selectVibeModel(model) {
+      if (this.modelsOf(this.vibe.available, this.vibe.active).includes(model)) {
+        this.vibe.activeModel = model;
+      }
     },
 
     // ── Theme ────────────────────────────────────────────────────────────

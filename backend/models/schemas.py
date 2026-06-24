@@ -43,17 +43,24 @@ class PlaylistsResponse(BaseModel):
 class RecommenderInfo(BaseModel):
     id: str
     label: str
+    # The engine's default model (a display sub-label); None for lastfm/catalog.
     model: str | None = None
+    # All selectable models for this engine (drives the model sub-selector); empty for
+    # non-LLM engines and for LLMs configured with a single model.
+    models: list[str] = []
 
 
 class RecommenderStatus(BaseModel):
-    """The session's active engine plus the list it may switch between (credential-gated)."""
+    """The session's active engine + model plus the list it may switch between."""
     active: str
+    active_model: str | None = None
     available: list[RecommenderInfo]
 
 
 class SetRecommenderRequest(BaseModel):
     engine: str = Field(..., min_length=1)
+    # Optional model within the chosen engine; ignored if not offered by that engine.
+    model: str | None = None
 
 
 class VibeStatus(BaseModel):
@@ -61,6 +68,7 @@ class VibeStatus(BaseModel):
     from. `active` is None and `available` is empty when no LLM key is configured, which
     the UI reads as "hide vibe mode entirely"."""
     active: str | None = None
+    active_model: str | None = None
     available: list[RecommenderInfo]
 
 
@@ -78,3 +86,5 @@ class VibeRequest(BaseModel):
     # Optional per-request LLM override; when a valid LLM, it's also persisted to the
     # session so the vibe panel's picker remembers it. Absent ⇒ use the session default.
     engine: str | None = None
+    # Optional model within that LLM; persisted likewise. Ignored if the engine doesn't offer it.
+    model: str | None = None

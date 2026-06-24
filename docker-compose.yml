@@ -19,6 +19,7 @@ services:
       - REDIRECT_URI=http://127.0.0.1:5470/callback
       # Default engine: lastfm | gemini | claude | catalog (users switch in Settings).
       - RECOMMENDER=lastfm
+      # Comma-separated = a model picker in the UI (first is the default).
       - GEMINI_MODEL=gemini-2.5-flash
       - CLAUDE_MODEL=claude-sonnet-4-6
       - MAX_SEEDS=50            # seed tracks per build (blended top tracks / recency-weighted playlist)

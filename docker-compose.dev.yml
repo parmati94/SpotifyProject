@@ -22,6 +22,9 @@ services:
       - REDIRECT_URI=http://127.0.0.1:5471/callback
       # Refresh-token login bypass for headless/LAN dev (DEV_REFRESH_TOKEN in ./.env).
       - DEV_AUTH=true
+      # Comma-separated = a model picker in the UI (first is the default).
+      - GEMINI_MODEL=gemini-2.5-flash
+      - CLAUDE_MODEL=claude-sonnet-4-6
       - LOG_LEVEL=DEBUG
     volumes:
       - ./backend:/app/backend                          # backend live-reload via uvicorn --reload

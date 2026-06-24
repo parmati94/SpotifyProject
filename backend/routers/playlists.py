@@ -13,6 +13,7 @@ from backend.core.recommender.factory import build_recommender
 from backend.core.spotify_client import SpotifyClient
 from backend.deps import (
     SESSION_VIBE_ENGINE_KEY,
+    SESSION_VIBE_MODEL_KEY,
     get_client,
     get_recommender,
     selected_vibe_engine,
@@ -112,7 +113,11 @@ def create_vibe(
         raise HTTPException(
             status_code=400, detail="Vibe mode needs a configured LLM (Claude or Gemini)."
         )
-    recommender = build_recommender(settings, client.sp, engine)
+    # Persist the model choice for this engine (default when unset/invalid) so the panel's
+    # sub-selector remembers it, then build with it.
+    model = settings.resolve_model(engine, body.model)
+    request.session[SESSION_VIBE_MODEL_KEY] = model
+    recommender = build_recommender(settings, client.sp, engine, model)
     res = _run(
         lambda: playlist_ops.create_vibe_playlist(
             client, recommender, body.description, body.num_songs, name_it=body.name_it
