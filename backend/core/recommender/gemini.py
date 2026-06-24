@@ -20,6 +20,10 @@ from .base import Recommender, RecommenderError, Seed, Suggestion, VibeResult, p
 # Over-request multiplier: ask for ~25% more than needed so resolver misses
 # (hallucinated songs, punctuation mismatches) still leave enough real tracks.
 _OVER_REQUEST = 1.25
+# Vibe builds over-request harder: the resolver now verifies artist match and rejects
+# loose mis-resolutions, and many on-vibe picks simply aren't on Spotify by that exact
+# title — so ~60% more candidates keeps the final count near the requested target.
+_VIBE_OVER_REQUEST = 1.6
 _MAX_RETRIES = 3
 
 # Vibe builds are quality-sensitive, not latency-sensitive: tighten the engine so it
@@ -99,7 +103,10 @@ class GeminiRecommender(Recommender):
             "a shorter on-vibe playlist beats a padded one with off-vibe filler.\n"
             "- Prefer different artists, but only among songs that already fit; never trade "
             "fit for variety.\n"
-            "- Only real songs that actually exist; do not invent titles or artists."
+            "- Only real, officially released songs available on major streaming "
+            "services — prefer original studio releases, and avoid bootleg remixes, "
+            "mashups, white-labels, and any title you are not confident exists. Do not "
+            "invent titles or artists."
             f"{naming}"
         )
 
@@ -158,7 +165,7 @@ class GeminiRecommender(Recommender):
 
         from google.genai import types
 
-        ask = max(count, int(count * _OVER_REQUEST))
+        ask = max(count, int(count * _VIBE_OVER_REQUEST))
         prompt = self._build_vibe_prompt(description, ask, name_it)
         logger.debug(
             "Gemini vibe: requesting %d suggestions (model=%s, name_it=%s) for %r",

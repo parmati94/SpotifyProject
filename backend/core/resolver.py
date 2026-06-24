@@ -2,8 +2,13 @@
 
 LLMs invent songs (and fabricate Spotify IDs — verified: 0/10 of Gemini's were
 real), so we never trust a suggestion: each is searched on Spotify and only ones
-that actually resolve become URIs. A strict field-scoped query is tried first,
-then a looser free-text query before giving up.
+whose returned track actually matches the suggested *artist and title* become URIs.
+Several query strategies are tried in order of precision (field-scoped on the primary
+artist, then looser free-text, with the LLM's "Series N - " title prefixes stripped),
+and each candidate is verified before it's accepted — so a search that drifts to an
+unrelated top hit ("Impulse NGHTMRE" → "Nightfall — Calmly") is dropped, not added.
+We scan several results per query, since the right track is often ranked just behind
+a more popular namesake.
 
 Performance: suggestions are de-duplicated, looked up in a persistent cache, and
 the remaining searches run on a small thread pool. Bounded concurrency (default 5)
@@ -14,6 +19,7 @@ spotipy's built-in 429/Retry-After backoff covers the occasional overage.
 from __future__ import annotations
 
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 
 from backend.common.logging_config import logger
@@ -24,32 +30,102 @@ from .resolver_cache import cache
 # slower (tripped the limit, forced backoff). Override via env if needed.
 _WORKERS = max(1, int(os.getenv("RESOLVER_WORKERS", "5")))
 
+# Scan a handful of results per query, not just the top hit: the right track is often
+# ranked behind a more popular namesake ("Crowd Control — Excision" sits below a dozen
+# unrelated "Crowd Control"s). We verify each candidate, so going deeper is safe.
+_SEARCH_LIMIT = 10
+
+# Splits a credited artist string into individual artists: "Excision & Datsik",
+# "A, B feat. C", "A x B" → ["Excision", "Datsik"] etc. Used to verify a search hit
+# and to query on the primary artist (Spotify stores collaborators separately, so
+# artist:"Excision & Datsik" matches nothing).
+_ARTIST_SPLIT = re.compile(r"\s*(?:&|,|/|\bfeat\.?\b|\bft\.?\b|\bx\b|\bvs\.?\b)\s*", re.I)
+# A leading "Something - " the LLM prepends from a series/source ("Destroid 5 - Crowd
+# Control", "Deadmau5 - Fn Pig") that isn't part of the real track title.
+_TITLE_PREFIX = re.compile(r"^.{1,40}?\s+-\s+(?=\S)")
+
+
+def _norm(s: str) -> str:
+    """Lowercase + strip everything but alphanumerics, so 'NGHTMRE' == 'Nghtmre',
+    'Deadmau5' == 'deadmau5', and 'Brain Dead' == 'Braindead' when comparing."""
+    return re.sub(r"[^a-z0-9]", "", s.lower())
+
+
+def _primary_artist(artist: str) -> str:
+    """The first credited artist — what we field-scope the query on, since Spotify
+    stores collaborators as separate artists."""
+    parts = [p for p in _ARTIST_SPLIT.split(artist) if p.strip()]
+    return parts[0] if parts else artist
+
+
+def _title_variants(title: str) -> list[str]:
+    """The title plus de-noised forms to try: with a leading 'X - ' prefix dropped and
+    with a trailing '(… Remix)'/'[… Edit]' parenthetical removed. Order-preserving,
+    de-duped; the original always comes first."""
+    variants = [title]
+    stripped = _TITLE_PREFIX.sub("", title).strip()
+    if stripped:
+        variants.append(stripped)
+    base = re.sub(r"\s*[\(\[][^\)\]]*[\)\]]\s*$", "", title).strip()
+    if base:
+        variants.append(base)
+    return list(dict.fromkeys(v for v in variants if v))
+
+
+def _artist_matches(suggested_artist: str, track_artists: list[str]) -> bool:
+    """True if the suggestion's artist genuinely corresponds to the track Spotify
+    returned. A search will happily return its top hit for *any* words ("Impulse
+    NGHTMRE" → "Nightfall — Calmly"), so we reject a candidate whose artist doesn't
+    actually match — that's where the off-vibe junk came from. A token matches when
+    either name contains the other (handles "feat."/remix credit bloat)."""
+    suggested = [_norm(p) for p in _ARTIST_SPLIT.split(suggested_artist) if _norm(p)]
+    actual = [_norm(a) for a in track_artists if _norm(a)]
+    return any(s and a and (s in a or a in s) for s in suggested for a in actual)
+
+
+def _title_matches(suggested_title: str, track_title: str) -> bool:
+    """True if a suggested title (or one of its de-noised variants) corresponds to the
+    track's title — substring either way, so 'Bass Cannon' matches 'Bass Cannon -
+    Crankdat Remix' and 'WTF' matches 'WTF!?', but 'WTF' won't match 'Lone Wolf'."""
+    actual = _norm(track_title)
+    return any(
+        v and actual and (v in actual or actual in v)
+        for v in (_norm(t) for t in _title_variants(suggested_title))
+    )
+
 
 def _key(suggestion: Suggestion) -> str:
     return f"{suggestion.title.strip().lower()}|{suggestion.artist.strip().lower()}"
 
 
 def resolve_one(sp, suggestion: Suggestion) -> str | None:
-    """Return a Spotify track URI for `suggestion`, or None if it can't be found."""
-    queries = (
-        f'track:"{suggestion.title}" artist:"{suggestion.artist}"',  # strict
-        f"{suggestion.title} {suggestion.artist}",                   # loose fallback
-    )
-    for kind, q in zip(("strict", "loose"), queries):
+    """Return a Spotify track URI for `suggestion`, or None if no Spotify track matches
+    it on both artist and title.
+
+    Tries several queries in order of precision and returns the first result that
+    verifies — so an unfindable suggestion drops out (absorbed by the over-request)
+    rather than resolving to whatever unrelated track Spotify ranked first."""
+    title, artist = suggestion.title, suggestion.artist
+    primary = _primary_artist(artist)
+    # Most precise first: field-scoped on the primary artist for each title variant,
+    # then loose free-text. De-duped, order preserved.
+    queries = [f'track:"{tv}" artist:"{primary}"' for tv in _title_variants(title)]
+    queries += [f"{title} {artist}", f"{title} {primary}"]
+    for q in dict.fromkeys(queries):
         try:
-            res = sp.search(q=q, type="track", limit=1)
+            res = sp.search(q=q, type="track", limit=_SEARCH_LIMIT)
         except Exception as exc:  # noqa: BLE001 — one bad search shouldn't kill the batch
             logger.warning("Spotify search failed for %r: %s", q, exc)
             continue
-        items = res.get("tracks", {}).get("items", [])
-        if items:
-            uri = items[0]["uri"]
-            logger.debug(
-                "Resolved %s — %s via %s query -> %s",
-                suggestion.title, suggestion.artist, kind, uri,
-            )
-            return uri
-    logger.debug("No Spotify match for %s — %s", suggestion.title, suggestion.artist)
+        for track in res.get("tracks", {}).get("items", []):
+            track_artists = [a["name"] for a in track.get("artists", [])]
+            if _artist_matches(artist, track_artists) and _title_matches(title, track["name"]):
+                logger.debug(
+                    "Resolved %s — %s -> %s (%s — %s)",
+                    title, artist, track["uri"], track["name"], ", ".join(track_artists),
+                )
+                return track["uri"]
+    logger.debug("No verified Spotify match for %s — %s", title, artist)
     return None
 
 
