@@ -22,6 +22,14 @@ from .base import Recommender, RecommenderError, Seed, Suggestion, VibeResult, p
 _OVER_REQUEST = 1.25
 _MAX_RETRIES = 3
 
+# Vibe builds are quality-sensitive, not latency-sensitive: tighten the engine so it
+# sticks to the requested mood instead of drifting. A lower temperature trims the
+# off-vibe randomness that 1.0 invites, and a small thinking budget lets flash actually
+# reason about whether each track fits before committing (vs. the thinking_budget=0 we
+# use on seed-based recommend, where we want speed + variety).
+_VIBE_TEMPERATURE = 0.7
+_VIBE_THINKING_BUDGET = 512
+
 
 class _SuggestionSchema(BaseModel):
     """Shape Gemini must return for each item (drives `response_schema`)."""
@@ -77,10 +85,22 @@ class GeminiRecommender(Recommender):
             else " Leave playlist_name and playlist_description empty."
         )
         return (
-            "You are a music curator. Build a playlist that matches this description from "
-            f'the listener: "{description}". Suggest {count} real, currently-existing songs '
-            "that fit the requested mood, genre, era, and energy. Vary the artists and do "
-            f"not invent songs that do not exist.{naming}"
+            "You are an expert music curator. Build a tightly cohesive playlist for this "
+            f'listener request: "{description}".\n\n'
+            "First read the request for its specific intent — genre/sub-genre, mood, energy "
+            "or intensity level, era, and any activity or setting. Then suggest up to "
+            f"{count} real, currently-existing songs where EVERY track clearly fits ALL of "
+            "those dimensions.\n\n"
+            "Rules:\n"
+            "- Cohesion beats variety. Every song must match the requested energy and mood: "
+            "a high-energy/aggressive request gets zero mellow, chill, or sentimental "
+            "tracks, and vice versa. When in doubt, leave it out.\n"
+            "- Never pad. If you cannot find enough songs that strongly fit, return fewer — "
+            "a shorter on-vibe playlist beats a padded one with off-vibe filler.\n"
+            "- Prefer different artists, but only among songs that already fit; never trade "
+            "fit for variety.\n"
+            "- Only real songs that actually exist; do not invent titles or artists."
+            f"{naming}"
         )
 
     def recommend(self, seeds: list[Seed], count: int) -> list[Suggestion]:
@@ -148,8 +168,8 @@ class GeminiRecommender(Recommender):
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=_VibeSchema,
-            temperature=self._temperature,
-            thinking_config=types.ThinkingConfig(thinking_budget=0),
+            temperature=_VIBE_TEMPERATURE,  # tighter than seed-based recommend — see top
+            thinking_config=types.ThinkingConfig(thinking_budget=_VIBE_THINKING_BUDGET),
         )
 
         client = self._get_client()

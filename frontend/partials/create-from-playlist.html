@@ -7,11 +7,14 @@
       <svg class="w-5 h-5 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       <h2 class="font-display text-lg font-bold">Create a playlist</h2>
     </div>
-    <!-- Segmented mode toggle — hidden entirely when no LLM is available for vibe mode. -->
-    <div x-show="vibe.available.length" class="inline-flex rounded-lg border border-gray-800 bg-gray-950 p-1">
-      <button @click="createMode = 'vibe'; createModeTouched = true" class="px-3 py-1.5 text-sm rounded-md transition-colors"
+    <!-- Segmented mode toggle — hidden entirely when no LLM is available for vibe mode.
+         On mobile it wraps to its own full-width row (each button flex-1) so it reads as
+         an intentional segmented control instead of being shoved/cramped beside the title;
+         on sm+ it shrinks back to an inline pill on the right. -->
+    <div x-show="vibe.available.length" class="inline-flex w-full sm:w-auto rounded-lg border border-gray-800 bg-gray-950 p-1">
+      <button @click="createMode = 'vibe'; createModeTouched = true" class="flex-1 sm:flex-none text-center px-3 py-1.5 text-sm rounded-md transition-colors"
               :class="createMode === 'vibe' ? 'bg-accent-500 text-gray-950 font-medium' : 'text-gray-400 hover:text-white'">From a vibe</button>
-      <button @click="createMode = 'playlist'; createModeTouched = true" class="px-3 py-1.5 text-sm rounded-md transition-colors"
+      <button @click="createMode = 'playlist'; createModeTouched = true" class="flex-1 sm:flex-none text-center px-3 py-1.5 text-sm rounded-md transition-colors"
               :class="createMode === 'playlist' ? 'bg-accent-500 text-gray-950 font-medium' : 'text-gray-400 hover:text-white'">From a playlist</button>
     </div>
   </div>
@@ -93,7 +96,7 @@
 
   <!-- ── Mode: from a vibe (free text → LLM) ────────────────────────────── -->
   <div x-show="createMode === 'vibe'" x-cloak>
-    <p class="text-sm text-gray-400 mb-3">Describe the playlist you want in plain words — an LLM picks songs to match, every one verified on Spotify.</p>
+    <p class="text-sm text-gray-400 mb-3">Describe a vibe — an LLM picks matching songs, each verified on Spotify.</p>
 
     <textarea x-model="vibeForm.description" rows="2" maxlength="300"
               placeholder="e.g. rainy sunday coffee-shop jazz · upbeat 2000s indie for a workout"

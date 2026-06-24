@@ -11,7 +11,7 @@
      x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100 translate-y-0"
      x-transition:leave-end="opacity-0 -translate-y-2"
-     class="fixed top-20 left-1/2 -translate-x-1/2 z-[1500] w-[calc(100%-1.5rem)] max-w-md">
+     class="fixed top-20 left-1/2 -translate-x-1/2 transform-gpu will-change-transform z-[1500] w-[calc(100%-1.5rem)] max-w-md">
   <div :class="actionResult?.ok ? 'bg-ok-900/90 border-ok-700 text-ok-100' : 'bg-danger-900/90 border-danger-700 text-danger-100'"
        class="flex items-start justify-between gap-3 px-3.5 py-3 border rounded-xl text-sm shadow-xl backdrop-blur-md">
     <div class="flex items-start gap-2 min-w-0">
