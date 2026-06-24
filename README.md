@@ -67,8 +67,8 @@ holds sane defaults as a fallback. Copy `.env.example` to `./.env` to start. (A 
 |----------|-------|
 | `REDIRECT_URI` | Must exactly match a registered Redirect URI **and** the origin you serve from. Spotify [forbids `localhost`](https://developer.spotify.com/documentation/web-api/concepts/redirect_uri) — use the loopback IP literal (`http://127.0.0.1:PORT/callback`) and browse via `127.0.0.1` too |
 | `RECOMMENDER` | **Default** engine: `lastfm` (default) · `gemini` · `claude` · `catalog` — each user can switch at runtime in Settings (see below) |
-| `GEMINI_MODEL` | Defaults to `gemini-2.5-flash` |
-| `CLAUDE_MODEL` | Defaults to `claude-sonnet-4-6` |
+| `GEMINI_MODEL` | Gemini model(s). **Comma-separated = a model picker in the UI** (first is the default). Defaults to `gemini-2.5-flash`. Options (06/2026): `gemini-2.5-flash` (fast, full-quality), `gemini-flash-lite-latest` (fastest), plus newer 3.x flash/pro tiers — see [Google's model list](https://ai.google.dev/gemini-api/docs/models) for the current set. e.g. `gemini-2.5-flash,gemini-flash-lite-latest` |
+| `CLAUDE_MODEL` | Claude model(s). **Comma-separated = a model picker in the UI** (first is the default). Defaults to `claude-sonnet-4-6`. Options (06/2026): `claude-haiku-4-5` (cheapest/fastest), `claude-sonnet-4-6` (balanced — the default here for cost/rate-limit reasons), `claude-opus-4-8` (most capable). e.g. `claude-sonnet-4-6,claude-opus-4-8` |
 | `LOG_LEVEL` | `INFO` by default |
 
 ### Recommendation engines

@@ -15,7 +15,7 @@ import time
 from pydantic import BaseModel
 
 from backend.common.logging_config import logger
-from .base import Recommender, RecommenderError, Seed, Suggestion, preview
+from .base import Recommender, RecommenderError, Seed, Suggestion, VibeResult, preview
 
 # Over-request multiplier: ask for ~25% more than needed so resolver misses
 # (hallucinated songs, punctuation mismatches) still leave enough real tracks.
@@ -28,6 +28,15 @@ class _SuggestionSchema(BaseModel):
 
     title: str
     artist: str
+
+
+class _VibeSchema(BaseModel):
+    """Shape Gemini must return for a vibe build: the song list plus an optional
+    LLM-authored name/description (drives `response_schema`)."""
+
+    playlist_name: str = ""
+    playlist_description: str = ""
+    songs: list[_SuggestionSchema]
 
 
 class GeminiRecommender(Recommender):
@@ -57,6 +66,21 @@ class GeminiRecommender(Recommender):
             "also like. Vary the artists, avoid repeating the seed tracks, and do not invent "
             "songs that do not exist.\n\n"
             f"Seed tracks:\n{seed_lines}"
+        )
+
+    @staticmethod
+    def _build_vibe_prompt(description: str, count: int, name_it: bool) -> str:
+        naming = (
+            " Also provide a short, evocative playlist name (at most 40 characters) and a "
+            "single-sentence description that captures the vibe."
+            if name_it
+            else " Leave playlist_name and playlist_description empty."
+        )
+        return (
+            "You are a music curator. Build a playlist that matches this description from "
+            f'the listener: "{description}". Suggest {count} real, currently-existing songs '
+            "that fit the requested mood, genre, era, and energy. Vary the artists and do "
+            f"not invent songs that do not exist.{naming}"
         )
 
     def recommend(self, seeds: list[Seed], count: int) -> list[Suggestion]:
@@ -107,15 +131,72 @@ class GeminiRecommender(Recommender):
                 raise RecommenderError(f"Gemini request failed: {exc}") from exc
         raise RecommenderError("Gemini request failed after retries.")
 
+    def recommend_vibe(self, description: str, count: int, *, name_it: bool) -> VibeResult:
+        description = (description or "").strip()
+        if not description or count <= 0:
+            return VibeResult(suggestions=[])
+
+        from google.genai import types
+
+        ask = max(count, int(count * _OVER_REQUEST))
+        prompt = self._build_vibe_prompt(description, ask, name_it)
+        logger.debug(
+            "Gemini vibe: requesting %d suggestions (model=%s, name_it=%s) for %r",
+            ask, self._model, name_it, description,
+        )
+        logger.debug("Gemini vibe prompt:\n%s", prompt)
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=_VibeSchema,
+            temperature=self._temperature,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        )
+
+        client = self._get_client()
+        for attempt in range(1, _MAX_RETRIES + 1):
+            try:
+                started = time.perf_counter()
+                response = client.models.generate_content(
+                    model=self._model, contents=prompt, config=config
+                )
+                parsed = getattr(response, "parsed", None)
+                songs = getattr(parsed, "songs", None) or []
+                suggestions = self._items_to_suggestions(songs)
+                name = (getattr(parsed, "playlist_name", "") or "").strip() or None
+                desc = (getattr(parsed, "playlist_description", "") or "").strip() or None
+                if not suggestions:
+                    logger.warning("Gemini vibe returned no usable suggestions.")
+                logger.debug(
+                    "Gemini vibe: %d suggestions in %.2fs (attempt %d, name=%r): %s",
+                    len(suggestions), time.perf_counter() - started, attempt, name,
+                    preview(suggestions),
+                )
+                return VibeResult(suggestions=suggestions, name=name, description=desc)
+            except Exception as exc:  # noqa: BLE001 — degrade, don't crash a playlist build
+                retryable = _is_retryable(exc)
+                logger.warning(
+                    "Gemini vibe request failed (attempt %d/%d, retryable=%s): %s",
+                    attempt, _MAX_RETRIES, retryable, exc,
+                )
+                if retryable and attempt < _MAX_RETRIES:
+                    time.sleep(2 ** (attempt - 1))
+                    continue
+                raise RecommenderError(f"Gemini request failed: {exc}") from exc
+        raise RecommenderError("Gemini request failed after retries.")
+
     @staticmethod
-    def _parse(response) -> list[Suggestion]:
-        parsed = getattr(response, "parsed", None) or []
+    def _items_to_suggestions(items) -> list[Suggestion]:
         out: list[Suggestion] = []
-        for item in parsed:
+        for item in items:
             title = getattr(item, "title", "").strip()
             artist = getattr(item, "artist", "").strip()
             if title and artist:
                 out.append(Suggestion(title=title, artist=artist))
+        return out
+
+    @classmethod
+    def _parse(cls, response) -> list[Suggestion]:
+        out = cls._items_to_suggestions(getattr(response, "parsed", None) or [])
         if not out:
             logger.warning("Gemini returned no usable suggestions.")
         return out

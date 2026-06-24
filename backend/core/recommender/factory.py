@@ -13,12 +13,17 @@ from .base import Recommender
 from .catalog import CatalogRecommender
 
 
-def build_recommender(settings: Settings, sp, engine: str | None = None) -> Recommender:
+def build_recommender(
+    settings: Settings, sp, engine: str | None = None, model: str | None = None
+) -> Recommender:
     # Caller may pass an already-resolved engine (e.g. a per-session selection);
     # otherwise fall back to the configured default. Either way the engine is assumed
     # resolved — its key is guaranteed present for keyed engines.
     if engine is None:
         engine = settings.effective_recommender
+    # Resolve the model against the provider's configured list (a requested one that
+    # isn't offered, or None, degrades to the provider default). None for non-LLM engines.
+    model = settings.resolve_model(engine, model)
 
     if engine == "lastfm":
         from .lastfm import LastfmRecommender
@@ -27,17 +32,16 @@ def build_recommender(settings: Settings, sp, engine: str | None = None) -> Reco
     elif engine == "gemini":
         from .gemini import GeminiRecommender
 
-        recommender = GeminiRecommender(settings.gemini_api_key, settings.gemini_model)
+        recommender = GeminiRecommender(settings.gemini_api_key, model)
     elif engine == "claude":
         from .claude import ClaudeRecommender
 
-        recommender = ClaudeRecommender(settings.anthropic_api_key, settings.claude_model)
+        recommender = ClaudeRecommender(settings.anthropic_api_key, model)
     else:
         recommender = CatalogRecommender(sp)
 
     # Surface the active engine at INFO (model included for the LLM engines) so the
     # logs always show which recommender served a build, not just its output.
-    model = {"gemini": settings.gemini_model, "claude": settings.claude_model}.get(engine)
     logger.info(
         "Recommender engine: %s%s",
         ENGINE_LABELS.get(engine, engine),

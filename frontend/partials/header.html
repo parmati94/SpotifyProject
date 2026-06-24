@@ -17,8 +17,8 @@
       <!-- Active recommendation engine; click to jump straight to the selector.
            Shown on mobile too — it's the only place the active engine surfaces there. -->
       <button x-show="authenticated && activeEngine()" @click="showSettings = true"
-              :title="`Recommendation engine: ${engineLabel(activeEngine())} — click to change`"
-              class="inline-flex items-center gap-1.5 text-xs text-accent-300 bg-accent-500/10 border border-accent-800/50 hover:border-accent-600 rounded-full px-2.5 py-1 transition-colors">
+              :data-tooltip="`Engine: ${activeEngineLabel()} — click to change`"
+              class="tooltip inline-flex items-center gap-1.5 text-xs text-accent-300 bg-accent-500/10 border border-accent-800/50 hover:border-accent-600 rounded-full px-2.5 py-1 transition-colors">
         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3.1c.2 1.65.95 2.4 2.6 2.6-1.65.2-2.4.95-2.6 2.6-.2-1.65-.95-2.4-2.6-2.6 1.65-.2 2.4-.95 2.6-2.6z"/><rect x="3" y="13" width="3" height="7" rx="1.5"/><rect x="8" y="9" width="3" height="11" rx="1.5"/><rect x="13" y="11" width="3" height="9" rx="1.5"/></svg>
         <span x-text="activeEngine()?.label"></span>
       </button>
@@ -29,8 +29,8 @@
       </button>
 
       <!-- Log out — icon-only (door + arrow), matching the -lens apps; frees header room. -->
-      <button x-show="authenticated" @click="logout()" aria-label="Log out" title="Log out"
-              class="group grid place-items-center w-9 h-9 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors">
+      <button x-show="authenticated" @click="logout()" aria-label="Log out" data-tooltip="Log out"
+              class="tooltip group grid place-items-center w-9 h-9 rounded-lg text-gray-400 hover:bg-gray-800 transition-colors">
         <svg class="w-5 h-5 group-hover:text-danger-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>

@@ -54,3 +54,27 @@ class Recommender(Protocol):
         list instead.
         """
         ...
+
+
+@dataclass(frozen=True)
+class VibeResult:
+    """A vibe-mode build: the suggested tracks plus an optional LLM-authored playlist
+    name and description. `name`/`description` are None when naming wasn't requested or
+    the model didn't return them; the caller supplies a fallback name in that case."""
+
+    suggestions: list[Suggestion]
+    name: str | None = None
+    description: str | None = None
+
+
+@runtime_checkable
+class VibeRecommender(Protocol):
+    """A recommender that can build from a free-text "vibe" instead of seed tracks.
+
+    Only the LLM engines implement this — interpreting natural language ("rainy sunday
+    coffee-shop jazz") is exactly what the data engines (lastfm/catalog) structurally
+    can't do. Same contract as `recommend`: over-request is allowed, "no results" returns
+    an empty `VibeResult`, and a hard engine failure raises `RecommenderError`."""
+
+    def recommend_vibe(self, description: str, count: int, *, name_it: bool) -> VibeResult:
+        ...

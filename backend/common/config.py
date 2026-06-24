@@ -60,11 +60,12 @@ class Settings(BaseSettings):
     lastfm_api_key: str | None = Field(None, alias="LASTFM_API_KEY")
     # Gemini — free key (no card) from https://aistudio.google.com/apikey.
     gemini_api_key: str | None = Field(None, alias="GEMINI_API_KEY")
-    # 2.5-flash is fast (~5s) and full-quality. 3.5-flash is currently badly degraded
-    # (~30s); gemini-flash-lite-latest is fastest (~3s) if you want max speed.
+    # Comma-separated list of selectable models; the first is the default. A single value
+    # behaves as before. 2.5-flash is fast (~5s) and full-quality; gemini-flash-lite-latest
+    # is fastest (~3s); add a pro model to pick a slower/stronger one from the UI.
     gemini_model: str = Field("gemini-2.5-flash", alias="GEMINI_MODEL")
     # Claude — key + a little credit from https://console.anthropic.com (separate from
-    # any Claude.ai/Max subscription).
+    # any Claude.ai/Max subscription). Comma-separated; first is the default.
     anthropic_api_key: str | None = Field(None, alias="ANTHROPIC_API_KEY")
     claude_model: str = Field("claude-sonnet-4-6", alias="CLAUDE_MODEL")
 
@@ -106,23 +107,67 @@ class Settings(BaseSettings):
         """The configured default engine (RECOMMENDER), resolved against credentials."""
         return self.resolve_engine(self.recommender)
 
+    # Per-provider model lists. The env vars are comma-separated (first = default), so a
+    # provider can expose several models for the UI to switch between (e.g. a fast default
+    # plus a slower/stronger one). Non-LLM providers have no model.
+    def models_for(self, provider: str) -> list[str]:
+        raw = {"gemini": self.gemini_model, "claude": self.claude_model}.get(provider)
+        return [m.strip() for m in raw.split(",") if m.strip()] if raw else []
+
+    def default_model(self, provider: str) -> str | None:
+        """The provider's default model (first in its list), or None for non-LLM providers."""
+        models = self.models_for(provider)
+        return models[0] if models else None
+
+    def resolve_model(self, provider: str, requested: str | None) -> str | None:
+        """The model to use for `provider`: the requested one if it's in the provider's
+        list, else the default. None for providers that have no model (lastfm/catalog)."""
+        models = self.models_for(provider)
+        if not models:
+            return None
+        return requested if requested in models else models[0]
+
+    def _engine_entry(self, eid: str) -> dict:
+        """UI descriptor for one engine: its default `model` (shown as a sub-label) and the
+        full `models` list it can switch between (empty for lastfm/catalog)."""
+        models = self.models_for(eid)
+        return {
+            "id": eid,
+            "label": ENGINE_LABELS[eid],
+            "model": models[0] if models else None,
+            "models": models,
+        }
+
     def available_engines(self) -> list[dict]:
         """Engines the user may pick from: the catalog fallback always, plus each keyed
-        engine whose API key is configured. `model` carries the configured model for the
-        LLM engines (for the UI to show, e.g. "Claude · claude-sonnet-4-6"), None for the
-        others. Order: real engines first, catalog fallback last."""
+        engine whose API key is configured. Each carries its default `model` and the full
+        `models` list for the model sub-selector. Order: real engines first, catalog last."""
         keyed = [
-            ("lastfm", self.lastfm_api_key, None),
-            ("gemini", self.gemini_api_key, self.gemini_model),
-            ("claude", self.anthropic_api_key, self.claude_model),
+            ("lastfm", self.lastfm_api_key),
+            ("gemini", self.gemini_api_key),
+            ("claude", self.anthropic_api_key),
         ]
-        engines = [
-            {"id": eid, "label": ENGINE_LABELS[eid], "model": model}
-            for eid, key, model in keyed
-            if key
-        ]
-        engines.append({"id": "catalog", "label": ENGINE_LABELS["catalog"], "model": None})
+        engines = [self._engine_entry(eid) for eid, key in keyed if key]
+        engines.append(self._engine_entry("catalog"))
         return engines
+
+    def available_vibe_engines(self) -> list[dict]:
+        """The LLM engines usable for vibe mode (free-text playlists), credential-gated.
+        Only LLMs can interpret a natural-language vibe, so lastfm/catalog are excluded.
+        Order: claude first (higher quality), then gemini. Empty ⇒ vibe mode is disabled."""
+        keyed = [
+            ("claude", self.anthropic_api_key),
+            ("gemini", self.gemini_api_key),
+        ]
+        return [self._engine_entry(eid) for eid, key in keyed if key]
+
+    def resolve_vibe_engine(self, requested: str | None) -> str | None:
+        """The LLM that serves vibe mode: the requested one if it's an available LLM,
+        else the best available (claude > gemini), else None when no LLM key is set."""
+        available = [e["id"] for e in self.available_vibe_engines()]
+        if requested in available:
+            return requested
+        return available[0] if available else None
 
 
 @lru_cache

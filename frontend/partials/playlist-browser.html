@@ -8,10 +8,18 @@
       <span class="text-sm text-gray-500" x-show="playlists.length"
             x-text="`${playlists.length} · ${totalTracks().toLocaleString()} tracks`"></span>
     </div>
-    <div class="relative" x-show="playlists.length">
-      <svg class="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
-      <input x-model="playlistSearch" type="text" placeholder="Search…"
-             class="w-40 sm:w-56 bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500" />
+    <div class="flex items-center gap-2">
+      <!-- Re-pull the library from Spotify (e.g. after editing playlists there) without
+           a full page reload. Spins while loading; shares the playlistsLoading state. -->
+      <button @click="loadPlaylists()" :disabled="playlistsLoading" data-tooltip="Refresh playlists" aria-label="Refresh playlists"
+              class="tooltip grid place-items-center w-9 h-9 rounded-lg border border-gray-700 bg-gray-900 text-gray-400 hover:text-white hover:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0">
+        <svg class="w-4 h-4" :class="playlistsLoading && 'animate-spin'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+      </button>
+      <div class="relative" x-show="playlists.length">
+        <svg class="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+        <input x-model="playlistSearch" type="text" placeholder="Search…"
+               class="w-40 sm:w-56 bg-gray-900 border border-gray-700 rounded-lg pl-9 pr-3 py-2 text-sm placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-accent-500/60 focus:border-accent-500" />
+      </div>
     </div>
   </div>
 

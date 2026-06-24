@@ -14,7 +14,7 @@ from datetime import datetime
 
 from backend.common.constants import APP_PLAYLIST_MARKER
 from backend.common.logging_config import logger
-from .recommender.base import Recommender, Seed
+from .recommender.base import Recommender, Seed, VibeRecommender
 from .resolver import resolve_all
 from .spotify_client import SpotifyClient
 
@@ -35,7 +35,11 @@ class PlaylistResult:
 WEEKLY_PLAYLIST_NAME = "Weekly Extended Playlist"
 DEFAULT_DAILY_COUNT = 40
 WEEKLY_EXTEND_COUNT = 40
+DEFAULT_VIBE_COUNT = 40
 _MAX_PLAYLIST_SONGS = 200
+# Fallback name when the user opts out of AI naming (or the LLM returns none); keeps the
+# date-named-daily heuristic in is_app_created clear of vibe playlists.
+_VIBE_NAME_MAX = 40
 
 # Matches the daily naming format (e.g. "Jun-23-2026") — used to recognize dailies
 # created before the description marker existed.
@@ -159,3 +163,44 @@ def create_playlist_from_playlist(
     )
     logger.info("Playlist created: %s (%d tracks)", target_name, len(uris))
     return PlaylistResult(f"Playlist created: {target_name}", pid, target_name, len(uris))
+
+
+def _vibe_fallback_name(description: str) -> str:
+    """Name for a vibe playlist when AI naming is off/unavailable — the trimmed vibe text."""
+    text = " ".join(description.split())[:_VIBE_NAME_MAX].strip()
+    return f"Vibe: {text}" if text else "Vibe playlist"
+
+
+def create_vibe_playlist(
+    client: SpotifyClient,
+    recommender: VibeRecommender,
+    description: str,
+    count: int = DEFAULT_VIBE_COUNT,
+    *,
+    name_it: bool = True,
+) -> PlaylistResult:
+    """Build a playlist from a free-text vibe via an LLM. The engine returns the song
+    suggestions plus (when `name_it`) a name/description; we resolve to real URIs and
+    write the playlist, falling back to a name derived from the vibe text if needed."""
+    description = description.strip()
+    if not description:
+        raise ValueError("Describe the vibe you want before generating.")
+    count = max(1, min(count, _MAX_PLAYLIST_SONGS))
+
+    result = recommender.recommend_vibe(description, count, name_it=name_it)
+    logger.debug("Vibe pipeline: engine returned %d suggestions; resolving", len(result.suggestions))
+    uris = resolve_all(client.sp, result.suggestions, limit=count)
+    if not uris:
+        raise ValueError("No playable songs were found for that vibe. Try rewording it.")
+    random.shuffle(uris)
+
+    name = result.name if (name_it and result.name) else _vibe_fallback_name(description)
+    # The app marker tags it as ours; prefix the LLM blurb when there is one.
+    playlist_description = (
+        f"{result.description} {APP_PLAYLIST_MARKER}" if result.description else APP_PLAYLIST_MARKER
+    )
+    pid = client.create_playlist(
+        client.current_user_id(), name, uris, description=playlist_description
+    )
+    logger.info("Vibe playlist created: %s (%d tracks)", name, len(uris))
+    return PlaylistResult(f"Vibe playlist created: {name}", pid, name, len(uris))
