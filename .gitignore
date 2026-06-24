@@ -107,6 +107,7 @@ celerybeat.pid
 .spotify-api
 .lastfm-api
 .anthropic-api
+.sample-model-responses
 
 # Personal planning doc — local only
 PLANNING.md

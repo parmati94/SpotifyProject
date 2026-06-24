@@ -10,6 +10,7 @@ from backend.common.logging_config import logger
 from backend.core import playlists as playlist_ops
 from backend.core.recommender.base import Recommender, RecommenderError
 from backend.core.recommender.factory import build_recommender
+from backend.core.recommender.lastfm import LastfmRecommender
 from backend.core.spotify_client import SpotifyClient
 from backend.deps import (
     SESSION_VIBE_ENGINE_KEY,
@@ -118,9 +119,15 @@ def create_vibe(
     model = settings.resolve_model(engine, body.model)
     request.session[SESSION_VIBE_MODEL_KEY] = model
     recommender = build_recommender(settings, client.sp, engine, model)
+    # Grounded count-fill: when the LLM lands short, top up from Last.fm similarity rather
+    # than padding with more LLM guesses. Only available when a Last.fm key is configured.
+    fill_recommender = (
+        LastfmRecommender(settings.lastfm_api_key) if settings.lastfm_api_key else None
+    )
     res = _run(
         lambda: playlist_ops.create_vibe_playlist(
-            client, recommender, body.description, body.num_songs, name_it=body.name_it
+            client, recommender, body.description, body.num_songs,
+            name_it=body.name_it, fill_recommender=fill_recommender,
         )
     )
     return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)
