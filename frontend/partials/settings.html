@@ -47,7 +47,7 @@
                   <!-- Default-model sub-label; hidden for the active engine when the model
                        sub-selector below is showing (it would be redundant). -->
                   <span x-show="e.model && !(recommender.active === e.id && e.models.length > 1)"
-                        class="block text-xs text-gray-500 truncate" x-text="e.model"></span>
+                        class="block text-xs text-gray-500 truncate" x-text="prettyModel(e.model)"></span>
                 </span>
               </button>
               <!-- Model sub-selector: only for the active engine when it offers >1 model. -->
@@ -60,7 +60,7 @@
                   <button @click="selectModel(m)" :disabled="recommender.switching"
                           class="px-2.5 py-1 text-xs rounded-md border transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                           :class="recommender.activeModel === m ? 'border-accent-500 bg-accent-500/10 text-white' : 'border-gray-700 text-gray-400 hover:border-gray-500'"
-                          x-text="m"></button>
+                          x-text="prettyModel(m)"></button>
                 </template>
               </div>
             </div>

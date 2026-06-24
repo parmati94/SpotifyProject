@@ -98,8 +98,31 @@ document.addEventListener('alpine:init', () => {
     activeEngine() {
       return this.recommender.available.find((e) => e.id === this.recommender.active) || null;
     },
+    // Pretty-print a raw model id for the UI: drop the provider prefix and tidy the
+    // version (claude-sonnet-4-6 → "Sonnet 4.6", gemini-2.5-flash → "2.5 Flash").
+    prettyModel(id) {
+      if (!id) return '';
+      const out = [];
+      for (const part of id.replace(/^(claude|gemini)-/, '').split('-')) {
+        const last = out[out.length - 1];
+        if (/^\d+$/.test(part) && /^[\d.]+$/.test(last || '')) out[out.length - 1] = `${last}.${part}`;
+        else if (/^[\d.]+$/.test(part)) out.push(part);
+        else out.push(part.charAt(0).toUpperCase() + part.slice(1));
+      }
+      return out.join(' ');
+    },
     engineLabel(e) {
-      return e ? (e.model ? `${e.label} · ${e.model}` : e.label) : '';
+      return e ? (e.model ? `${e.label} · ${this.prettyModel(e.model)}` : e.label) : '';
+    },
+    // The active engine paired with its *currently selected* model (not the engine's
+    // default) — for toasts and the header tooltip. Without this the toast would show
+    // the engine default every time, even after switching models.
+    activeEngineLabel() {
+      const e = this.activeEngine();
+      if (!e) return '';
+      return this.recommender.activeModel
+        ? `${e.label} · ${this.prettyModel(this.recommender.activeModel)}`
+        : e.label;
     },
     // The selectable models for an engine id in a given list — drives the model
     // sub-selector, which only shows when an engine offers more than one.
@@ -120,7 +143,7 @@ document.addEventListener('alpine:init', () => {
         this.recommender.active = data.active;
         this.recommender.activeModel = data.active_model;
         this.recommender.available = data.available ?? this.recommender.available;
-        this._toast(true, `Recommendations now use ${this.engineLabel(this.activeEngine())}.`);
+        this._toast(true, `Recommendations now use ${this.activeEngineLabel()}.`);
       } catch (e) {
         this.recommender.active = prev;      // roll back on failure
         this.recommender.activeModel = prevModel;
@@ -139,7 +162,7 @@ document.addEventListener('alpine:init', () => {
       try {
         const data = await api.setRecommender(this.recommender.active, model);
         this.recommender.activeModel = data.active_model;
-        this._toast(true, `Recommendations now use ${this.engineLabel(this.activeEngine())}.`);
+        this._toast(true, `Recommendations now use ${this.activeEngineLabel()}.`);
       } catch (e) {
         this.recommender.activeModel = prev;
         this._handleError(e, 'Could not change the model.');

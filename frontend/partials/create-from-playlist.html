@@ -129,7 +129,7 @@
         <template x-for="m in modelsOf(vibe.available, vibe.active)" :key="m">
           <button @click="selectVibeModel(m)" class="px-2.5 py-1 text-xs rounded-md border transition-colors"
                   :class="vibe.activeModel === m ? 'border-accent-500 bg-accent-500/10 text-white' : 'border-gray-700 text-gray-400 hover:border-gray-500'"
-                  x-text="m"></button>
+                  x-text="prettyModel(m)"></button>
         </template>
       </div>
     </div>

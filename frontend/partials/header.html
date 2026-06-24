@@ -17,7 +17,7 @@
       <!-- Active recommendation engine; click to jump straight to the selector.
            Shown on mobile too — it's the only place the active engine surfaces there. -->
       <button x-show="authenticated && activeEngine()" @click="showSettings = true"
-              :title="`Recommendation engine: ${engineLabel(activeEngine())} — click to change`"
+              :title="`Recommendation engine: ${activeEngineLabel()} — click to change`"
               class="inline-flex items-center gap-1.5 text-xs text-accent-300 bg-accent-500/10 border border-accent-800/50 hover:border-accent-600 rounded-full px-2.5 py-1 transition-colors">
         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3.1c.2 1.65.95 2.4 2.6 2.6-1.65.2-2.4.95-2.6 2.6-.2-1.65-.95-2.4-2.6-2.6 1.65-.2 2.4-.95 2.6-2.6z"/><rect x="3" y="13" width="3" height="7" rx="1.5"/><rect x="8" y="9" width="3" height="11" rx="1.5"/><rect x="13" y="11" width="3" height="9" rx="1.5"/></svg>
         <span x-text="activeEngine()?.label"></span>
