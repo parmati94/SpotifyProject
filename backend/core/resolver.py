@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import os
 import re
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 
 from backend.common.logging_config import logger
@@ -43,11 +44,15 @@ _ARTIST_SPLIT = re.compile(r"\s*(?:&|,|/|\bfeat\.?\b|\bft\.?\b|\bx\b|\bvs\.?\b)\
 # A leading "Something - " the LLM prepends from a series/source ("Destroid 5 - Crowd
 # Control", "Deadmau5 - Fn Pig") that isn't part of the real track title.
 _TITLE_PREFIX = re.compile(r"^.{1,40}?\s+-\s+(?=\S)")
+# A leading "The " dropped when comparing artists, so "The Beatles" == "Beatles".
+_LEADING_THE = re.compile(r"^the\s+", re.I)
 
 
 def _norm(s: str) -> str:
-    """Lowercase + strip everything but alphanumerics, so 'NGHTMRE' == 'Nghtmre',
-    'Deadmau5' == 'deadmau5', and 'Brain Dead' == 'Braindead' when comparing."""
+    """Lowercase, transliterate accents (é→e, ÿ→y), strip everything but alphanumerics —
+    so 'NGHTMRE' == 'Nghtmre', 'Deadmau5' == 'deadmau5', 'Beyoncé' == 'Beyonce', and
+    'JAŸ-Z' == 'Jay-Z' when comparing."""
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"[^a-z0-9]", "", s.lower())
 
 
@@ -72,15 +77,26 @@ def _title_variants(title: str) -> list[str]:
     return list(dict.fromkeys(v for v in variants if v))
 
 
+def _artist_key(s: str) -> str:
+    """Comparison key for an artist name: `_norm` with a leading 'The ' dropped, so
+    'The Beatles' == 'Beatles'."""
+    return _norm(_LEADING_THE.sub("", s.strip()))
+
+
 def _artist_matches(suggested_artist: str, track_artists: list[str]) -> bool:
     """True if the suggestion's artist genuinely corresponds to the track Spotify
     returned. A search will happily return its top hit for *any* words ("Impulse
     NGHTMRE" → "Nightfall — Calmly"), so we reject a candidate whose artist doesn't
-    actually match — that's where the off-vibe junk came from. A token matches when
-    either name contains the other (handles "feat."/remix credit bloat)."""
-    suggested = [_norm(p) for p in _ARTIST_SPLIT.split(suggested_artist) if _norm(p)]
-    actual = [_norm(a) for a in track_artists if _norm(a)]
-    return any(s and a and (s in a or a in s) for s in suggested for a in actual)
+    match. We require an *exact* (normalized) name match, not a substring — substring
+    matching let "Excision" match the unrelated band "Indecent Excision". The whole
+    suggested string is checked first (so a name containing a split char, e.g.
+    "Tyler, The Creator", still matches), then each credited collaborator."""
+    actual = {_artist_key(a) for a in track_artists if _artist_key(a)}
+    if not actual:
+        return False
+    if _artist_key(suggested_artist) in actual:
+        return True
+    return any(_artist_key(p) in actual for p in _ARTIST_SPLIT.split(suggested_artist) if _artist_key(p))
 
 
 def _title_matches(suggested_title: str, track_title: str) -> bool:

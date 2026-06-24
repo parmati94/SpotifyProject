@@ -41,6 +41,16 @@ _MAX_PLAYLIST_SONGS = 200
 # date-named-daily heuristic in is_app_created clear of vibe playlists.
 _VIBE_NAME_MAX = 40
 
+# Hybrid vibe build (see PLANNING §12.2): the LLM interprets the vibe and supplies a clean
+# *core* (its top picks); Last.fm similarity grounds and extends it. A/B/C testing showed the
+# LLM over-concentrates on a few artists and drifts as it pads for count, while a Last.fm fill
+# seeded by the LLM's clean head adds on-vibe variety — so we deliberately cap the LLM core at
+# ~60% of the target and fill the rest, rather than only filling when the LLM comes up short.
+# Thin cores are protected by the same ratio: fill never outweighs the core (it stays a
+# majority), so a niche vibe yields a shorter playlist instead of a fill-dominated, drifty one.
+_VIBE_CORE_FRACTION = 0.6   # LLM provides ~60% of the playlist; Last.fm fills the remainder
+_VIBE_FILL_SEED_HEAD = 15   # how many top core tracks to seed Last.fm with
+
 # Matches the daily naming format (e.g. "Jun-23-2026") — used to recognize dailies
 # created before the description marker existed.
 _DAILY_NAME_RE = re.compile(r"^[A-Z][a-z]{2}-\d{2}-\d{4}$")
@@ -171,6 +181,65 @@ def _vibe_fallback_name(description: str) -> str:
     return f"Vibe: {text}" if text else "Vibe playlist"
 
 
+def _seeds_from_uris(client: SpotifyClient, uris: list[str]) -> list[Seed]:
+    """Resolve verified track URIs back to {title, artist} seeds for the fill engine —
+    canonical Spotify metadata makes cleaner Last.fm seeds than the LLM's raw titles."""
+    if not uris:
+        return []
+    try:
+        tracks = client.sp.tracks(uris).get("tracks", [])
+    except Exception as exc:  # noqa: BLE001 — fill is best-effort; skip it on a lookup failure
+        logger.warning("Vibe fill: seed lookup failed, skipping fill: %s", exc)
+        return []
+    seeds: list[Seed] = []
+    for t in tracks:
+        if not t:
+            continue
+        title = (t.get("name") or "").strip()
+        artists = t.get("artists") or []
+        artist = (artists[0].get("name") or "").strip() if artists else ""
+        if title and artist:
+            seeds.append(Seed(title, artist))
+    return seeds
+
+
+def _hybrid_blend(
+    client: SpotifyClient, fill_recommender: Recommender, llm_uris: list[str], target: int
+) -> list[str]:
+    """Blend the LLM's clean *core* with a grounded Last.fm fill (the "B" strategy).
+
+    Takes the LLM's top ~`_VIBE_CORE_FRACTION` of the target as the core (its highest-ranked,
+    cleanest picks — the drift and artist over-concentration show up further down the list),
+    then fills the rest from Last.fm similarity seeded by the head of that core. Last.fm's
+    cross-seed aggregation extends the vibe with real, co-listened tracks (grounded, no
+    hallucination) and broadens artist variety. The fill never outweighs the core — the final
+    total is capped at `core / _VIBE_CORE_FRACTION` — so a thin core (niche vibe the LLM
+    couldn't fill) yields a shorter playlist rather than a fill-dominated, drifty one.
+
+    Best-effort: any Last.fm/lookup miss just returns the core as-is."""
+    core = llm_uris[: max(1, round(target * _VIBE_CORE_FRACTION))]
+    # Keep the LLM core a majority: cap the total at core / fraction (≈ target for a healthy
+    # core, less for a thin one), and never exceed the requested target.
+    max_total = min(target, round(len(core) / _VIBE_CORE_FRACTION))
+    need = max_total - len(core)
+    if need <= 0:
+        return core
+    seeds = _seeds_from_uris(client, core[:_VIBE_FILL_SEED_HEAD])
+    if not seeds:
+        return core
+    logger.debug(
+        "Vibe hybrid: LLM core=%d (of %d resolved), filling %d from Last.fm (target=%d)",
+        len(core), len(llm_uris), need, target,
+    )
+    suggestions = fill_recommender.recommend(seeds, need)
+    fill = resolve_all(client.sp, suggestions, limit=need, exclude_uris=set(core))
+    logger.info(
+        "Vibe hybrid: %d LLM core + %d Last.fm fill = %d tracks (target %d).",
+        len(core), len(fill), len(core) + len(fill), target,
+    )
+    return core + fill
+
+
 def create_vibe_playlist(
     client: SpotifyClient,
     recommender: VibeRecommender,
@@ -178,10 +247,15 @@ def create_vibe_playlist(
     count: int = DEFAULT_VIBE_COUNT,
     *,
     name_it: bool = True,
+    fill_recommender: Recommender | None = None,
 ) -> PlaylistResult:
     """Build a playlist from a free-text vibe via an LLM. The engine returns the song
     suggestions plus (when `name_it`) a name/description; we resolve to real URIs and
-    write the playlist, falling back to a name derived from the vibe text if needed."""
+    write the playlist, falling back to a name derived from the vibe text if needed.
+
+    When `fill_recommender` is supplied (Last.fm), the build is a hybrid: the LLM's clean
+    core plus a grounded Last.fm fill — see `_hybrid_blend`. Off by default (None) so callers
+    without a Last.fm key get the raw LLM list unchanged."""
     description = description.strip()
     if not description:
         raise ValueError("Describe the vibe you want before generating.")
@@ -192,6 +266,11 @@ def create_vibe_playlist(
     uris = resolve_all(client.sp, result.suggestions, limit=count)
     if not uris:
         raise ValueError("No playable songs were found for that vibe. Try rewording it.")
+    # Hybrid blend: keep the LLM's clean core, ground/extend the rest from Last.fm (more
+    # cohesion + artist variety than letting the LLM pad for count). Falls through to the raw
+    # LLM list when no Last.fm key is configured.
+    if fill_recommender is not None:
+        uris = _hybrid_blend(client, fill_recommender, uris, count)
     random.shuffle(uris)
 
     name = result.name if (name_it and result.name) else _vibe_fallback_name(description)
