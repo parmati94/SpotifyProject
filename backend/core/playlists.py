@@ -55,6 +55,13 @@ _VIBE_NAME_MAX = 40
 _VIBE_CORE_FRACTION = 0.6   # LLM provides ~60% of the playlist; Last.fm fills the remainder
 _VIBE_FILL_SEED_HEAD = 15   # how many top core tracks to seed Last.fm with
 
+# When a vibe build attaches a source playlist (the "transform" mode — regenerate this
+# playlist with a change applied), we hand the LLM a recency-weighted sample of that
+# playlist as reference. Capped higher than the default 50 seeds: more reference better
+# conveys a playlist's character, and `playlist_seeds` already scales the sample down for
+# smaller playlists, so 100 is a ceiling, not a fixed cost.
+_VIBE_SOURCE_SEED_MAX = 100
+
 # Matches the daily naming format (e.g. "Jun-23-2026") — used to recognize dailies
 # created before the description marker existed.
 _DAILY_NAME_RE = re.compile(r"^[A-Z][a-z]{2}-\d{2}-\d{4}$")
@@ -252,10 +259,15 @@ def create_vibe_playlist(
     *,
     name_it: bool = True,
     fill_recommender: Recommender | None = None,
+    source_playlist: str | None = None,
 ) -> PlaylistResult:
     """Build a playlist from a free-text vibe via an LLM. The engine returns the song
     suggestions plus (when `name_it`) a name/description; we resolve to real URIs and
     write the playlist, falling back to a name derived from the vibe text if needed.
+
+    When `source_playlist` is given, the build is a *transform*: a recency-weighted sample
+    of that playlist is handed to the LLM as reference and the vibe text is applied as a
+    change to it (regenerate, not edit — see `vibe_prompt`).
 
     When `fill_recommender` is supplied (Last.fm), the build is a hybrid: the LLM's clean
     core plus a grounded Last.fm fill — see `_hybrid_blend`. Off by default (None) so callers
@@ -265,7 +277,16 @@ def create_vibe_playlist(
         raise ValueError("Describe the vibe you want before generating.")
     count = max(1, min(count, _MAX_VIBE_SONGS))
 
-    result = recommender.recommend_vibe(description, count, name_it=name_it)
+    seeds = None
+    if source_playlist:
+        source_id = client.find_playlist_id(source_playlist)
+        if source_id is None:
+            raise ValueError(f"Source playlist '{source_playlist}' was not found.")
+        seeds = client.playlist_seeds(source_id, limit=_VIBE_SOURCE_SEED_MAX)
+        if not seeds:
+            raise ValueError(f"Source playlist '{source_playlist}' has no usable tracks to build from.")
+
+    result = recommender.recommend_vibe(description, count, name_it=name_it, seeds=seeds)
     logger.debug("Vibe pipeline: engine returned %d suggestions; resolving", len(result.suggestions))
     uris = resolve_all(client.sp, result.suggestions, limit=count)
     if not uris:

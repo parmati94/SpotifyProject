@@ -15,7 +15,7 @@ import time
 from pydantic import BaseModel
 
 from backend.common.logging_config import logger
-from .base import Recommender, RecommenderError, Seed, Suggestion, VibeResult, preview
+from .base import Recommender, RecommenderError, Seed, Suggestion, VibeResult, preview, vibe_prompt
 
 # Over-request multiplier: ask for ~25% more than needed so resolver misses
 # (hallucinated songs, punctuation mismatches) still leave enough real tracks.
@@ -80,36 +80,6 @@ class GeminiRecommender(Recommender):
             f"Seed tracks:\n{seed_lines}"
         )
 
-    @staticmethod
-    def _build_vibe_prompt(description: str, count: int, name_it: bool) -> str:
-        naming = (
-            " Also provide a short, evocative playlist name (at most 40 characters) and a "
-            "single-sentence description that captures the vibe."
-            if name_it
-            else " Leave playlist_name and playlist_description empty."
-        )
-        return (
-            "You are an expert music curator. Build a tightly cohesive playlist for this "
-            f'listener request: "{description}".\n\n'
-            "First read the request for its specific intent — genre/sub-genre, mood, energy "
-            "or intensity level, era, and any activity or setting. Then suggest up to "
-            f"{count} real, currently-existing songs where EVERY track clearly fits ALL of "
-            "those dimensions.\n\n"
-            "Rules:\n"
-            "- Cohesion beats variety. Every song must match the requested energy and mood: "
-            "a high-energy/aggressive request gets zero mellow, chill, or sentimental "
-            "tracks, and vice versa. When in doubt, leave it out.\n"
-            "- Never pad. If you cannot find enough songs that strongly fit, return fewer — "
-            "a shorter on-vibe playlist beats a padded one with off-vibe filler.\n"
-            "- Prefer different artists, but only among songs that already fit; never trade "
-            "fit for variety.\n"
-            "- Only real, officially released songs available on major streaming "
-            "services — prefer original studio releases, and avoid bootleg remixes, "
-            "mashups, white-labels, and any title you are not confident exists. Do not "
-            "invent titles or artists."
-            f"{naming}"
-        )
-
     def recommend(self, seeds: list[Seed], count: int) -> list[Suggestion]:
         if not seeds or count <= 0:
             return []
@@ -158,7 +128,9 @@ class GeminiRecommender(Recommender):
                 raise RecommenderError(f"Gemini request failed: {exc}") from exc
         raise RecommenderError("Gemini request failed after retries.")
 
-    def recommend_vibe(self, description: str, count: int, *, name_it: bool) -> VibeResult:
+    def recommend_vibe(
+        self, description: str, count: int, *, name_it: bool, seeds: list[Seed] | None = None
+    ) -> VibeResult:
         description = (description or "").strip()
         if not description or count <= 0:
             return VibeResult(suggestions=[])
@@ -166,10 +138,10 @@ class GeminiRecommender(Recommender):
         from google.genai import types
 
         ask = max(count, int(count * _VIBE_OVER_REQUEST))
-        prompt = self._build_vibe_prompt(description, ask, name_it)
+        prompt = vibe_prompt(description, ask, name_it=name_it, seeds=seeds)
         logger.debug(
-            "Gemini vibe: requesting %d suggestions (model=%s, name_it=%s) for %r",
-            ask, self._model, name_it, description,
+            "Gemini vibe: requesting %d suggestions (model=%s, name_it=%s, seeds=%d) for %r",
+            ask, self._model, name_it, len(seeds or ()), description,
         )
         logger.debug("Gemini vibe prompt:\n%s", prompt)
         config = types.GenerateContentConfig(

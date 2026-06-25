@@ -128,6 +128,7 @@ def create_vibe(
         lambda: playlist_ops.create_vibe_playlist(
             client, recommender, body.description, body.num_songs,
             name_it=body.name_it, fill_recommender=fill_recommender,
+            source_playlist=body.source_playlist,
         )
     )
     return PlaylistMutationResponse(message=res.message, id=res.playlist_id, name=res.name, total_tracks=res.track_count)

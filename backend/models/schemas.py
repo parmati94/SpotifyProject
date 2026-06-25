@@ -85,6 +85,9 @@ class VibeRequest(BaseModel):
     # ceiling — the LLM exhausts genuinely on-vibe picks well before 200 and starts to drift.
     num_songs: int = Field(40, ge=1, le=100)
     name_it: bool = True
+    # Optional source playlist to transform: when set, the vibe text is applied as a change
+    # to this playlist (regenerate it less hardcore, etc.) rather than built from scratch.
+    source_playlist: str | None = None
     # Optional per-request LLM override; when a valid LLM, it's also persisted to the
     # session so the vibe panel's picker remembers it. Absent ⇒ use the session default.
     engine: str | None = None

@@ -14,12 +14,16 @@ export function playlistActions() {
     playlistTab: 'library',     // 'library' (user's own) | 'app' (made by this app)
     sourceDropdownOpen: false,  // create-from-playlist source picker
     sourceSearch: '',
+    vibeSourceDropdownOpen: false,  // vibe mode's optional "transform this playlist" picker
+    vibeSourceSearch: '',
     actionLoading: false, // global mutex: one mutating action at a time
     busy: '',             // which action is running ('daily'|'weekly'|'delete'|'from'|'vibe')
     createMode: 'playlist',   // 'playlist' (seed from existing) | 'vibe' (free-text)
     createModeTouched: false, // true once the user picks a tab, so loadVibe's default doesn't override them
     createForm: { source: '', target: '', count: 60 },
-    vibeForm: { description: '', count: 40, nameIt: true },
+    // vibe `sourcePlaylist` is optional: empty ⇒ build from scratch; set ⇒ transform that
+    // playlist (the description becomes the change to apply).
+    vibeForm: { description: '', count: 40, nameIt: true, sourcePlaylist: '' },
 
     // ── Derived ──────────────────────────────────────────────────────────────
     // Plain methods, not getters: this object is SPREAD into the Alpine root
@@ -108,6 +112,8 @@ export function playlistActions() {
           description,
           num_songs: this.vibeForm.count,
           name_it: this.vibeForm.nameIt,
+          // Optional: when set, the build transforms this playlist instead of starting fresh.
+          source_playlist: this.vibeForm.sourcePlaylist || null,
           engine: this.vibe.active,       // remembered server-side for next time
           model: this.vibe.activeModel,   // ditto — the specific model within that engine
         }),
@@ -137,6 +143,27 @@ export function playlistActions() {
     },
     sourceOptions() {
       const q = this.sourceSearch.trim().toLowerCase();
+      if (!q) return this.playlists;
+      return this.playlists.filter((p) => p.name.toLowerCase().includes(q));
+    },
+
+    // ── Vibe-source selection (the optional "transform this playlist" picker) ──
+    // Separate from createForm's source so the two pickers don't share open/search state.
+    selectVibeSource(name) {
+      this.vibeForm.sourcePlaylist = name;
+      this.vibeSourceDropdownOpen = false;
+      this.vibeSourceSearch = '';
+    },
+    clearVibeSource() {
+      this.vibeForm.sourcePlaylist = '';
+      this.vibeSourceDropdownOpen = false;
+      this.vibeSourceSearch = '';
+    },
+    selectedVibeSourcePlaylist() {
+      return this.playlists.find((p) => p.name === this.vibeForm.sourcePlaylist) || null;
+    },
+    vibeSourceOptions() {
+      const q = this.vibeSourceSearch.trim().toLowerCase();
       if (!q) return this.playlists;
       return this.playlists.filter((p) => p.name.toLowerCase().includes(q));
     },
